@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1117">
+  <meta name="description" content="Jogo do cronômetro cego: tente parar o tempo no alvo sem ver o relógio!">
+  <title>Cronômetro Cego</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Tela: Configuração ===== -->
+  <section id="screen-setup" class="screen active">
+    <div class="container">
+      <div class="logo">⏱️</div>
+      <h1>Cronômetro Cego</h1>
+      <p class="subtitle">
+        O jogo sorteia um tempo entre <strong>0 e 20 segundos</strong>.
+        Inicie e pare o cronômetro <strong>sem ver o relógio</strong>.
+        Quem chegar mais perto do alvo, vence!
+      </p>
+
+      <div class="card">
+        <label class="field-label" for="player-name-input">Jogadores</label>
+        <ul id="player-list" class="player-list"></ul>
+        <div class="add-player-row">
+          <input id="player-name-input" type="text" maxlength="16" placeholder="Nome do jogador" autocomplete="off">
+          <button id="btn-add-player" class="btn btn-small" type="button">Adicionar</button>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="btn btn-primary btn-big" type="button">Começar jogo</button>
+      <p class="hint">Dica: jogando sozinho, tente bater seu próprio recorde!</p>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Jogo ===== -->
+  <section id="screen-play" class="screen">
+    <div class="container">
+      <div class="target-box">
+        <span class="target-label">Tempo alvo</span>
+        <span id="target-display" class="target-value">0,00 s</span>
+      </div>
+
+      <div id="current-player-box" class="current-player">
+        <span class="turn-label">Vez de</span>
+        <span id="current-player-name" class="turn-name">Jogador 1</span>
+      </div>
+
+      <button id="btn-timer" class="timer-button state-ready" type="button">
+        <span id="timer-button-label">TOCAR PARA<br>INICIAR</span>
+        <span class="pulse-ring"></span>
+      </button>
+
+      <p id="play-hint" class="hint">O relógio fica escondido enquanto corre. Confie no seu instinto! 🙈</p>
+      <button id="btn-abort" class="btn btn-ghost" type="button">Cancelar rodada</button>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Registrado (entre jogadores) ===== -->
+  <section id="screen-recorded" class="screen">
+    <div class="container">
+      <div class="logo">🔒</div>
+      <h2>Tempo registrado!</h2>
+      <p class="subtitle">O resultado de <strong id="recorded-player-name"></strong> ficará em segredo até o fim da rodada.</p>
+      <p class="subtitle">Passe o aparelho para <strong id="next-player-name"></strong>.</p>
+      <button id="btn-next-player" class="btn btn-primary btn-big" type="button">Estou pronto!</button>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Resultados ===== -->
+  <section id="screen-results" class="screen">
+    <div class="container">
+      <div class="logo">🏆</div>
+      <h2 id="results-title">Resultados</h2>
+      <p class="subtitle">Tempo alvo: <strong id="results-target"></strong></p>
+
+      <ol id="results-list" class="results-list"></ol>
+
+      <div id="solo-best" class="solo-best hidden">
+        Seu recorde: <strong id="solo-best-value"></strong> de diferença
+      </div>
+
+      <button id="btn-play-again" class="btn btn-primary btn-big" type="button">Jogar de novo</button>
+      <button id="btn-change-players" class="btn btn-ghost" type="button">Trocar jogadores</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
