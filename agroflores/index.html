@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0e3a20">
   <meta name="description" content="Agroflores Garden — controle de estoque e ponto de venda com autorização do administrador para alteração de preços.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Agroflores">
   <title>Agroflores Garden — Estoque &amp; Vendas</title>
-  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="icon" href="icon-512.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-512.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -176,9 +182,9 @@
       <input type="text" id="price-reason" maxlength="120" placeholder="Ex.: promoção, produto danificado…">
 
       <div id="price-auth-block" class="auth-block">
-        <p class="auth-note">⚠️ Alteração de preço exige <strong>autorização do administrador</strong>.</p>
-        <label class="field-label" for="price-pin">Administrador presente? Digite o PIN para autorizar agora <small>(opcional)</small></label>
-        <input type="password" id="price-pin" inputmode="numeric" placeholder="PIN do administrador" maxlength="8" autocomplete="off">
+        <p class="auth-note">⚠️ Alteração de preço exige <strong>autorização do administrador</strong>.
+        A solicitação será enviada pelo app e a venda com o novo preço
+        <strong>só poderá ser finalizada depois da aprovação</strong>.</p>
       </div>
 
       <p id="price-error" class="error-msg hidden"></p>
@@ -188,6 +194,15 @@
         <button id="btn-price-submit" class="btn btn-primary">Enviar</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===== Barra de venda (mobile) ===== -->
+  <div id="mobile-cart-bar" class="mobile-cart-bar hidden">
+    <div>
+      <small id="mbar-count"></small>
+      <strong id="mbar-total">R$ 0,00</strong>
+    </div>
+    <button id="btn-mbar" class="btn btn-primary btn-small">Ver venda ▾</button>
   </div>
 
   <!-- ===== Toast ===== -->

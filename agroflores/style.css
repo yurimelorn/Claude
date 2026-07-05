@@ -152,8 +152,9 @@ input:focus, select:focus {
   padding: 10px 18px;
   gap: 12px;
 }
-.header-logo { height: 46px; }
-.header-user { display: flex; align-items: center; gap: 10px; }
+.header-logo { height: 46px; flex-shrink: 0; }
+.header-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.header-user .btn { flex-shrink: 0; }
 .user-badge {
   color: #fff;
   font-size: .85rem;
@@ -161,6 +162,13 @@ input:focus, select:focus {
   border-radius: 999px;
   padding: 6px 14px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .header-logo { height: 34px; }
+  .user-badge { font-size: .78rem; padding: 5px 10px; }
 }
 .app-header .btn-ghost { color: #cfe3c8; border-color: rgba(255,255,255,.25); }
 .app-header .btn-ghost:hover { border-color: #fff; color: #fff; }
@@ -388,6 +396,42 @@ input:focus, select:focus {
 }
 .auth-block .auth-note { font-size: .85rem; margin-bottom: 4px; }
 .auth-block .field-label { margin-top: 8px; }
+
+/* ===== Pendência de autorização ===== */
+.pending-tag {
+  font-size: .78rem;
+  color: #8a6d00;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-line);
+  border-radius: 8px;
+  padding: 3px 8px;
+  margin-top: 4px;
+  display: inline-block;
+}
+.pending-chip { background: var(--warn-bg); border-color: var(--warn-line); color: #8a6d00; }
+
+/* ===== Barra de venda fixa (mobile) ===== */
+.mobile-cart-bar {
+  display: none;
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  background: var(--green-950);
+  color: #fff;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  border-top: 3px solid var(--lime);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mobile-cart-bar small { display: block; color: #bcd6b3; font-size: .75rem; }
+.mobile-cart-bar strong { font-size: 1.2rem; }
+@media (max-width: 760px) {
+  .mobile-cart-bar:not(.hidden) { display: flex; }
+  .views { padding-bottom: 90px; }
+  .cart-panel { position: static; }
+  .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
 
 /* ===== Toast ===== */
 .toast {

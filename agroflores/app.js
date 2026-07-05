@@ -34,9 +34,26 @@ let user = null;             // { name, role }
 let cart = new Map();        // productId -> qty
 let priceModalProductId = null;
 
+// localStorage pode estar bloqueado (ex.: navegação privada / iframe);
+// nesse caso os dados vivem só em memória durante a sessão.
+const storage = (() => {
+  try {
+    localStorage.setItem("__agroflores_test", "1");
+    localStorage.removeItem("__agroflores_test");
+    return localStorage;
+  } catch (_) {
+    const mem = new Map();
+    return {
+      getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+      setItem: (k, v) => mem.set(k, String(v)),
+      removeItem: (k) => mem.delete(k),
+    };
+  }
+})();
+
 function loadDb() {
   try {
-    const raw = localStorage.getItem(DB_KEY);
+    const raw = storage.getItem(DB_KEY);
     if (raw) return JSON.parse(raw);
   } catch (_) { /* dados corrompidos: recomeça */ }
   return {
@@ -50,11 +67,13 @@ function loadDb() {
 }
 
 function saveDb() {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+  storage.setItem(DB_KEY, JSON.stringify(db));
 }
 
 const productById = (id) => db.products.find((p) => p.id === id);
 const pendingCount = () => db.requests.filter((r) => r.status === "pendente").length;
+const pendingRequestFor = (productId) =>
+  db.requests.find((r) => r.productId === productId && r.status === "pendente");
 
 /* ===== Helpers de DOM ===== */
 
@@ -112,6 +131,7 @@ function showLoginError(msg) {
 $("#btn-logout").addEventListener("click", () => {
   user = null;
   cart.clear();
+  $("#mobile-cart-bar").classList.add("hidden");
   $("#screen-app").classList.remove("active");
   $("#screen-login").classList.add("active");
 });
@@ -164,6 +184,7 @@ function switchView(id) {
     t.classList.toggle("active", t.dataset.view === id));
   document.querySelectorAll(".view").forEach((v) =>
     v.classList.toggle("active", v.id === "view-" + id));
+  renderCart(); // atualiza a barra mobile conforme a aba visível
 }
 
 function updateBadge() {
@@ -232,9 +253,15 @@ function renderCart() {
     const info = el("div", "c-info");
     info.append(el("div", "c-name", p.name));
     info.append(el("div", "c-unit", `${fmtBRL(p.price)} / un.`));
-    const alterBtn = el("button", "link-btn", "Alterar preço (requer autorização)");
-    alterBtn.addEventListener("click", () => openPriceModal(p.id));
-    info.append(alterBtn);
+    const pending = pendingRequestFor(p.id);
+    if (pending) {
+      info.append(el("div", "pending-tag",
+        `⏳ Novo preço ${fmtBRL(pending.newPrice)} aguardando autorização`));
+    } else {
+      const alterBtn = el("button", "link-btn", "Alterar preço (requer autorização)");
+      alterBtn.addEventListener("click", () => openPriceModal(p.id));
+      info.append(alterBtn);
+    }
 
     const controls = el("div", "qty-controls");
     const minus = el("button", "qty-btn", "−");
@@ -255,7 +282,23 @@ function renderCart() {
 
   $("#cart-empty").classList.toggle("hidden", cart.size > 0);
   $("#cart-total").textContent = fmtBRL(total);
+  updateMobileBar(total);
 }
+
+/* Barra fixa no rodapé (telas pequenas) com o total da venda */
+function updateMobileBar(total) {
+  const bar = $("#mobile-cart-bar");
+  const count = [...cart.values()].reduce((a, b) => a + b, 0);
+  const onPdv = $("#view-pdv").classList.contains("active");
+  bar.classList.toggle("hidden", count === 0 || !onPdv);
+  $("#mbar-count").textContent =
+    count === 1 ? "1 item na venda" : `${count} itens na venda`;
+  $("#mbar-total").textContent = fmtBRL(total);
+}
+
+$("#btn-mbar").addEventListener("click", () => {
+  document.querySelector(".cart-panel").scrollIntoView({ behavior: "smooth" });
+});
 
 $("#btn-clear-cart").addEventListener("click", () => {
   cart.clear();
@@ -265,6 +308,16 @@ $("#btn-clear-cart").addEventListener("click", () => {
 
 $("#btn-checkout").addEventListener("click", () => {
   if (cart.size === 0) return toast("Adicione produtos à venda primeiro.", true);
+
+  // Venda com alteração de preço pendente só depois da autorização do admin.
+  for (const [id] of cart) {
+    const pending = pendingRequestFor(id);
+    if (pending) {
+      return toast(
+        `Venda bloqueada: "${pending.productName}" tem alteração de preço ` +
+        `aguardando autorização do administrador. 🔒`, true);
+    }
+  }
 
   const items = [];
   let total = 0;
@@ -342,10 +395,14 @@ function renderStock() {
       const actions = el("td");
       const wrap = el("div", "row-actions");
 
-      const priceBtn = el("button", "btn btn-ghost btn-small",
-        user.role === "admin" ? "Alterar preço" : "Solicitar novo preço");
-      priceBtn.addEventListener("click", () => openPriceModal(p.id));
-      wrap.append(priceBtn);
+      if (user.role !== "admin" && pendingRequestFor(p.id)) {
+        wrap.append(el("span", "chip pending-chip", "⏳ Aguardando admin"));
+      } else {
+        const priceBtn = el("button", "btn btn-ghost btn-small",
+          user.role === "admin" ? "Alterar preço" : "Solicitar novo preço");
+        priceBtn.addEventListener("click", () => openPriceModal(p.id));
+        wrap.append(priceBtn);
+      }
 
       if (user.role === "admin") {
         const delBtn = el("button", "btn btn-danger btn-small", "Remover");
@@ -371,13 +428,15 @@ function renderStock() {
 function openPriceModal(productId) {
   const p = productById(productId);
   if (!p) return;
+  if (user.role !== "admin" && pendingRequestFor(productId)) {
+    return toast(`"${p.name}" já tem uma solicitação aguardando o administrador.`, true);
+  }
   priceModalProductId = productId;
 
   $("#price-product-name").textContent = p.name;
   $("#price-current").textContent = fmtBRL(p.price);
   $("#price-new").value = "";
   $("#price-reason").value = "";
-  $("#price-pin").value = "";
   $("#price-error").classList.add("hidden");
 
   // Admin altera direto; vendedor precisa de autorização.
@@ -428,21 +487,10 @@ $("#btn-price-submit").addEventListener("click", () => {
     return;
   }
 
-  // Vendedor: precisa de autorização do administrador.
-  const pin = $("#price-pin").value;
-  if (pin) {
-    if (pin !== ADMIN_PIN)
-      return fail("PIN do administrador incorreto. Deixe em branco para enviar a solicitação e aguardar aprovação.");
-    applyPriceChange(p, newPrice);
-    logRequest(p, oldPrice, newPrice, reason, "aprovada", "PIN no balcão");
-    closePriceModal();
-    toast(`Autorizado! Preço de "${p.name}" atualizado para ${fmtBRL(newPrice)}.`);
-    return;
-  }
-
+  // Vendedor: a solicitação vai pelo app para o administrador aprovar.
   logRequest(p, oldPrice, newPrice, reason, "pendente", null);
   closePriceModal();
-  toast("Solicitação enviada. Aguardando autorização do administrador. 🔔");
+  toast("Solicitação enviada ao administrador. A venda com o novo preço fica liberada após a aprovação. 🔔");
 });
 
 function applyPriceChange(product, newPrice) {
@@ -466,8 +514,7 @@ function logRequest(product, oldPrice, newPrice, reason, status, approvedBy) {
     resolvedAt: status === "pendente" ? null : new Date().toISOString(),
   });
   saveDb();
-  renderRequests();
-  updateBadge();
+  renderAll();
 }
 
 /* ===== Lista de solicitações / autorizações ===== */
@@ -514,6 +561,17 @@ function renderRequests() {
       const reject = el("button", "btn btn-danger btn-small", "✖ Recusar");
       reject.addEventListener("click", () => resolveRequest(r.id, false));
       actions.append(approve, reject);
+      li.append(actions);
+    } else if (user && user.role !== "admin" && r.status === "pendente") {
+      const actions = el("div", "r-actions");
+      const cancel = el("button", "btn btn-ghost btn-small", "Cancelar solicitação");
+      cancel.addEventListener("click", () => {
+        db.requests = db.requests.filter((x) => x.id !== r.id);
+        saveDb();
+        renderAll();
+        toast("Solicitação cancelada.");
+      });
+      actions.append(cancel);
       li.append(actions);
     }
 

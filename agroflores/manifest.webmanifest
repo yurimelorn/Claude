@@ -1,0 +1,14 @@
+{
+  "name": "Agroflores Garden — Estoque & Vendas",
+  "short_name": "Agroflores",
+  "description": "Controle de estoque e vendas com autorização do administrador para alteração de preços.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0e3a20",
+  "theme_color": "#0e3a20",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
