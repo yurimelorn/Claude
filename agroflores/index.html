@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0e3a20">
+  <meta name="description" content="Agroflores Garden — controle de estoque e ponto de venda com autorização do administrador para alteração de preços.">
+  <title>Agroflores Garden — Estoque &amp; Vendas</title>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Tela: Login / seleção de perfil ===== -->
+  <section id="screen-login" class="screen active">
+    <div class="login-box">
+      <img src="logo.png" alt="Agroflores Garden" class="login-logo">
+      <p class="login-tagline">Estoque &amp; Vendas</p>
+
+      <div class="card">
+        <label class="field-label" for="login-name">Seu nome</label>
+        <input type="text" id="login-name" placeholder="Ex.: Maria" maxlength="30" autocomplete="off">
+
+        <label class="field-label">Perfil</label>
+        <div class="role-picker">
+          <button type="button" class="role-btn selected" data-role="vendedor">
+            <span class="role-icon">🛒</span>
+            <strong>Vendedor</strong>
+            <small>Vende e solicita alterações</small>
+          </button>
+          <button type="button" class="role-btn" data-role="admin">
+            <span class="role-icon">🔑</span>
+            <strong>Administrador</strong>
+            <small>Autoriza e gerencia</small>
+          </button>
+        </div>
+
+        <div id="login-pin-row" class="hidden">
+          <label class="field-label" for="login-pin">PIN do administrador</label>
+          <input type="password" id="login-pin" inputmode="numeric" placeholder="••••" maxlength="8" autocomplete="off">
+          <p class="hint">PIN padrão do modelo: <code>1234</code></p>
+        </div>
+
+        <p id="login-error" class="error-msg hidden"></p>
+        <button id="btn-login" class="btn btn-primary btn-block">Entrar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== App ===== -->
+  <section id="screen-app" class="screen">
+    <header class="app-header">
+      <img src="logo.png" alt="Agroflores Garden" class="header-logo">
+      <div class="header-user">
+        <span id="user-badge" class="user-badge"></span>
+        <button id="btn-logout" class="btn btn-ghost btn-small" title="Sair">Sair</button>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+
+    <main class="views">
+
+      <!-- ===== Aba: PDV (vendedor) ===== -->
+      <div id="view-pdv" class="view">
+        <div class="pdv-grid">
+          <section class="panel">
+            <h2>Produtos</h2>
+            <input type="search" id="pdv-search" class="search" placeholder="Buscar produto…">
+            <ul id="pdv-products" class="product-list"></ul>
+          </section>
+
+          <section class="panel cart-panel">
+            <h2>Venda atual</h2>
+            <ul id="cart-items" class="cart-list"></ul>
+            <p id="cart-empty" class="empty-msg">Toque em um produto para adicioná-lo à venda.</p>
+            <div class="cart-total-row">
+              <span>Total</span>
+              <strong id="cart-total">R$ 0,00</strong>
+            </div>
+            <div class="cart-actions">
+              <button id="btn-clear-cart" class="btn btn-ghost">Limpar</button>
+              <button id="btn-checkout" class="btn btn-primary">Finalizar venda</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- ===== Aba: Estoque ===== -->
+      <div id="view-estoque" class="view">
+        <section class="panel">
+          <h2>Adicionar ao estoque</h2>
+          <form id="form-product" class="product-form">
+            <div class="form-row">
+              <div class="form-field grow">
+                <label class="field-label" for="prod-name">Produto</label>
+                <input type="text" id="prod-name" placeholder="Ex.: Muda de rosa" maxlength="60" required>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="prod-category">Categoria</label>
+                <select id="prod-category">
+                  <option>Flores</option>
+                  <option>Mudas</option>
+                  <option>Vasos</option>
+                  <option>Insumos</option>
+                  <option>Ferramentas</option>
+                  <option>Outros</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label class="field-label" for="prod-price">Preço (R$)</label>
+                <input type="number" id="prod-price" min="0.01" step="0.01" placeholder="0,00" required>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="prod-qty">Quantidade</label>
+                <input type="number" id="prod-qty" min="1" step="1" value="1" required>
+              </div>
+              <div class="form-field btn-field">
+                <button type="submit" class="btn btn-primary">Adicionar</button>
+              </div>
+            </div>
+            <p class="hint">Se o produto já existir, a quantidade é somada ao estoque atual.</p>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h2>Estoque atual</h2>
+          <input type="search" id="stock-search" class="search" placeholder="Buscar no estoque…">
+          <div class="table-wrap">
+            <table class="stock-table">
+              <thead>
+                <tr>
+                  <th>Produto</th><th>Categoria</th><th>Preço</th><th>Qtd.</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="stock-rows"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== Aba: Solicitações / Autorizações ===== -->
+      <div id="view-solicitacoes" class="view">
+        <section class="panel">
+          <h2 id="requests-title">Solicitações de alteração de preço</h2>
+          <ul id="request-list" class="request-list"></ul>
+          <p id="requests-empty" class="empty-msg">Nenhuma solicitação por aqui.</p>
+        </section>
+      </div>
+
+      <!-- ===== Aba: Vendas (admin) ===== -->
+      <div id="view-vendas" class="view">
+        <section class="panel">
+          <h2>Histórico de vendas</h2>
+          <ul id="sales-list" class="sales-list"></ul>
+          <p id="sales-empty" class="empty-msg">Nenhuma venda registrada ainda.</p>
+        </section>
+      </div>
+
+    </main>
+  </section>
+
+  <!-- ===== Modal: alterar preço ===== -->
+  <div id="modal-price" class="modal-backdrop hidden">
+    <div class="modal">
+      <h3>Alterar preço</h3>
+      <p class="modal-product" id="price-product-name"></p>
+      <p class="modal-current">Preço atual: <strong id="price-current"></strong></p>
+
+      <label class="field-label" for="price-new">Novo preço (R$)</label>
+      <input type="number" id="price-new" min="0.01" step="0.01" placeholder="0,00">
+
+      <label class="field-label" for="price-reason">Motivo</label>
+      <input type="text" id="price-reason" maxlength="120" placeholder="Ex.: promoção, produto danificado…">
+
+      <div id="price-auth-block" class="auth-block">
+        <p class="auth-note">⚠️ Alteração de preço exige <strong>autorização do administrador</strong>.</p>
+        <label class="field-label" for="price-pin">Administrador presente? Digite o PIN para autorizar agora <small>(opcional)</small></label>
+        <input type="password" id="price-pin" inputmode="numeric" placeholder="PIN do administrador" maxlength="8" autocomplete="off">
+      </div>
+
+      <p id="price-error" class="error-msg hidden"></p>
+
+      <div class="modal-actions">
+        <button id="btn-price-cancel" class="btn btn-ghost">Cancelar</button>
+        <button id="btn-price-submit" class="btn btn-primary">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
