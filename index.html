@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f1220" />
+  <meta name="description" content="Cronômetro Cego — jogo de precisão: pare o cronômetro no tempo exato sem olhar!" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Cronômetro Cego</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --bg-soft: #191d33;
+      --card: #1e2340;
+      --card-2: #262c52;
+      --text: #eef0ff;
+      --muted: #9aa0c3;
+      --accent: #7c5cff;
+      --accent-2: #5cc8ff;
+      --green: #3ddc84;
+      --yellow: #ffd166;
+      --red: #ff5c7a;
+      --radius: 20px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1200px 800px at 70% -10%, #232a55 0%, var(--bg) 55%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100dvh;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 480px;
+      padding: max(16px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.35s ease; }
+    .screen.active { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.6); opacity: 0; }
+      70% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    header.top {
+      text-align: center;
+      padding: 24px 0 8px;
+    }
+
+    .logo {
+      font-size: 3rem;
+      line-height: 1;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-top: 8px;
+    }
+
+    h1 .grad {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-top: 18px;
+    }
+
+    .card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .rules { list-style: none; display: grid; gap: 10px; }
+    .rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.95rem; color: #cdd2f0; }
+    .rules .n {
+      flex: 0 0 auto;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--card-2);
+      color: var(--accent-2);
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 0.8rem;
+    }
+
+    /* Players list */
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card-2);
+      border-radius: 14px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .player-row .avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #10132a;
+    }
+
+    .player-row input {
+      flex: 1;
+      min-width: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .player-row input::placeholder { color: var(--muted); font-weight: 400; }
+
+    .player-row .remove {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+    }
+    .player-row .remove:active { background: rgba(255, 92, 122, 0.15); color: var(--red); }
+
+    .btn {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--card-2);
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+    .btn:active { transform: scale(0.97); filter: brightness(1.15); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #5a3df0);
+      box-shadow: 0 8px 24px rgba(124, 92, 255, 0.35);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      border: 2px dashed #3a4170;
+      color: var(--muted);
+      padding: 12px;
+      font-weight: 600;
+    }
+
+    .btn + .btn { margin-top: 12px; }
+
+    .spacer { flex: 1; }
+
+    /* ===== Round / target screen ===== */
+    .badge {
+      display: inline-block;
+      background: var(--card-2);
+      color: var(--accent-2);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin: 0 auto;
+    }
+
+    .center { text-align: center; }
+
+    .target-value {
+      font-size: clamp(4rem, 22vw, 6.5rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 10px 0 0;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: pop 0.5s ease;
+    }
+
+    .target-unit { font-size: 1.1rem; color: var(--muted); margin-top: 4px; }
+
+    .turn-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 26px auto 0;
+      background: var(--card);
+      border-radius: 999px;
+      padding: 10px 20px;
+      width: fit-content;
+      box-shadow: var(--shadow);
+    }
+    .turn-pill .avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 0.85rem;
+      color: #10132a;
+    }
+    .turn-pill .name { font-weight: 700; font-size: 1.05rem; }
+
+    .hint { color: var(--muted); font-size: 0.9rem; margin-top: 14px; }
+
+    /* ===== The big timer button ===== */
+    .big-btn {
+      width: min(72vw, 300px);
+      aspect-ratio: 1;
+      margin: 28px auto;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: linear-gradient(145deg, #2a3160, #1c2143);
+      box-shadow: var(--shadow), inset 0 2px 0 rgba(255, 255, 255, 0.08);
+      transition: transform 0.1s ease;
+      position: relative;
+    }
+    .big-btn:active { transform: scale(0.96); }
+
+    .big-btn .icon { font-size: 3rem; line-height: 1; }
+    .big-btn .label { font-size: 1.15rem; font-weight: 800; letter-spacing: 0.02em; }
+    .big-btn .sub { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+
+    .big-btn.running {
+      background: linear-gradient(145deg, #45308f, #6d28d9);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .big-btn.running .sub { color: rgba(255, 255, 255, 0.75); }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.45), var(--shadow); }
+      50% { box-shadow: 0 0 0 26px rgba(124, 92, 255, 0), var(--shadow); }
+    }
+
+    /* ===== Player result ===== */
+    .result-time {
+      font-size: clamp(3.2rem, 17vw, 5rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin-top: 8px;
+      animation: pop 0.45s ease;
+    }
+
+    .diff-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      animation: pop 0.5s ease 0.1s backwards;
+    }
+    .diff-pill.great { background: rgba(61, 220, 132, 0.15); color: var(--green); }
+    .diff-pill.ok    { background: rgba(255, 209, 102, 0.15); color: var(--yellow); }
+    .diff-pill.bad   { background: rgba(255, 92, 122, 0.15); color: var(--red); }
+
+    .verdict { margin-top: 12px; font-size: 1rem; color: var(--muted); }
+
+    /* ===== Ranking ===== */
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card-2);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      animation: fadeIn 0.4s ease backwards;
+    }
+    .rank-row:nth-child(1) { animation-delay: 0.05s; }
+    .rank-row:nth-child(2) { animation-delay: 0.15s; }
+    .rank-row:nth-child(3) { animation-delay: 0.25s; }
+    .rank-row:nth-child(4) { animation-delay: 0.35s; }
+    .rank-row:nth-child(5) { animation-delay: 0.45s; }
+    .rank-row:nth-child(6) { animation-delay: 0.55s; }
+
+    .rank-row.winner {
+      background: linear-gradient(135deg, rgba(124, 92, 255, 0.35), rgba(92, 200, 255, 0.2));
+      outline: 2px solid rgba(124, 92, 255, 0.6);
+    }
+
+    .rank-row .medal { font-size: 1.4rem; width: 30px; text-align: center; }
+    .rank-row .info { flex: 1; min-width: 0; }
+    .rank-row .info .nm { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-row .info .tm { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+    .rank-row .delta { font-weight: 800; font-size: 1rem; text-align: right; }
+    .rank-row .delta small { display: block; font-weight: 500; color: var(--muted); font-size: 0.7rem; }
+
+    .winner-banner {
+      text-align: center;
+      margin: 18px 0 6px;
+    }
+    .winner-banner .trophy { font-size: 3.2rem; animation: pop 0.6s ease; display: inline-block; }
+    .winner-banner .who { font-size: 1.4rem; font-weight: 800; margin-top: 6px; }
+    .winner-banner .who span {
+      background: linear-gradient(90deg, var(--yellow), #ff9f68);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    /* Scoreboard */
+    .score-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+      margin-top: 14px;
+      scrollbar-width: none;
+    }
+    .score-strip::-webkit-scrollbar { display: none; }
+    .score-chip {
+      flex: 0 0 auto;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 8px 14px;
+      text-align: center;
+      min-width: 76px;
+    }
+    .score-chip .nm { font-size: 0.75rem; color: var(--muted); white-space: nowrap; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+    .score-chip .pts { font-size: 1.2rem; font-weight: 800; margin-top: 2px; }
+
+    footer.credit {
+      text-align: center;
+      color: #565d85;
+      font-size: 0.75rem;
+      padding-top: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- ============ TELA: INÍCIO / JOGADORES ============ -->
+    <section id="screen-home" class="screen active">
+      <header class="top">
+        <div class="logo">⏱️</div>
+        <h1>Cronômetro <span class="grad">Cego</span></h1>
+        <p class="subtitle">Pare o tempo no segundo exato — sem olhar!</p>
+      </header>
+
+      <div class="card">
+        <h2>Como jogar</h2>
+        <ul class="rules">
+          <li><span class="n">1</span> Sorteamos um tempo alvo entre 0 e 20 segundos (ex.: 1,57s).</li>
+          <li><span class="n">2</span> Toque para iniciar o cronômetro. Ele fica escondido!</li>
+          <li><span class="n">3</span> Toque de novo quando achar que o tempo passou.</li>
+          <li><span class="n">4</span> Quem parar mais perto do alvo vence a rodada. 🏆</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Jogadores</h2>
+        <div id="players-list"></div>
+        <button class="btn ghost" id="btn-add-player">+ Adicionar jogador</button>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn primary" id="btn-start-game" style="margin-top:18px;">Começar jogo</button>
+      <footer class="credit">Funciona offline • Instale na tela inicial 📲</footer>
+    </section>
+
+    <!-- ============ TELA: ALVO DA RODADA ============ -->
+    <section id="screen-target" class="screen">
+      <header class="top">
+        <span class="badge" id="round-badge">Rodada 1</span>
+      </header>
+
+      <div class="center" style="margin-top:30px;">
+        <p class="subtitle">Seu alvo é parar o cronômetro em</p>
+        <div class="target-value" id="target-display">0,00</div>
+        <div class="target-unit">segundos</div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="center">
+        <p class="hint">Memorize bem esse número! ☝️</p>
+      </div>
+
+      <button class="btn primary" id="btn-goto-play" style="margin-top:20px;">Entendi, vamos lá!</button>
+    </section>
+
+    <!-- ============ TELA: JOGADA (cronômetro cego) ============ -->
+    <section id="screen-play" class="screen">
+      <header class="top">
+        <span class="badge" id="play-target-badge">Alvo: 0,00s</span>
+      </header>
+
+      <div class="turn-pill">
+        <div class="avatar" id="play-avatar">A</div>
+        <div class="name" id="play-name">Jogador</div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <button class="big-btn" id="btn-timer">
+        <span class="icon" id="timer-icon">▶️</span>
+        <span class="label" id="timer-label">TOCAR PARA INICIAR</span>
+        <span class="sub" id="timer-sub">o cronômetro ficará invisível</span>
+      </button>
+
+      <div class="spacer"></div>
+      <p class="hint center" id="play-hint">Concentre-se… conte mentalmente! 🧠</p>
+    </section>
+
+    <!-- ============ TELA: RESULTADO DO JOGADOR ============ -->
+    <section id="screen-player-result" class="screen">
+      <header class="top">
+        <span class="badge" id="result-target-badge">Alvo: 0,00s</span>
+      </header>
+
+      <div class="center" style="margin-top:24px;">
+        <div class="turn-pill" style="margin-top:0;">
+          <div class="avatar" id="result-avatar">A</div>
+          <div class="name" id="result-name">Jogador</div>
+        </div>
+
+        <p class="subtitle" style="margin-top:26px;">Você parou em</p>
+        <div class="result-time" id="result-time">0,00s</div>
+
+        <div class="diff-pill" id="result-diff">±0,00s</div>
+        <p class="verdict" id="result-verdict"></p>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn primary" id="btn-next-player">Próximo jogador →</button>
+    </section>
+
+    <!-- ============ TELA: RANKING DA RODADA ============ -->
+    <section id="screen-ranking" class="screen">
+      <header class="top">
+        <span class="badge" id="ranking-badge">Resultado da rodada</span>
+      </header>
+
+      <div class="winner-banner">
+        <span class="trophy">🏆</span>
+        <div class="who" id="winner-name"><span>—</span></div>
+        <p class="subtitle" id="winner-detail">chegou mais perto do alvo!</p>
+      </div>
+
+      <div class="card">
+        <h2 id="ranking-title">Ranking — alvo 0,00s</h2>
+        <div id="ranking-list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Placar geral (vitórias)</h2>
+        <div class="score-strip" id="score-strip"></div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn primary" id="btn-next-round">Nova rodada 🔄</button>
+      <button class="btn" id="btn-end-game">Encerrar e voltar ao início</button>
+    </section>
+
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ============================= Estado ============================= */
+    const AVATAR_COLORS = ["#7c5cff", "#5cc8ff", "#3ddc84", "#ffd166", "#ff5c7a", "#ff9f68", "#c084fc", "#4ade80"];
+
+    const state = {
+      players: [],        // { name, color, wins }
+      round: 0,
+      target: 0,          // segundos (2 casas)
+      currentIdx: 0,      // jogador da vez
+      results: [],        // { idx, time, diff } da rodada atual
+      timerStart: null,   // performance.now() quando iniciou
+      running: false,
+    };
+
+    /* ============================= Helpers ============================= */
+    const $ = (id) => document.getElementById(id);
+
+    const fmt = (n) => n.toFixed(2).replace(".", ",");
+
+    const vibrate = (ms) => { if (navigator.vibrate) navigator.vibrate(ms); };
+
+    function show(screenId) {
+      document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+      $(screenId).classList.add("active");
+      window.scrollTo(0, 0);
+    }
+
+    function randomTarget() {
+      // 0,00 a 20,00 segundos, com 2 casas decimais
+      return Math.round(Math.random() * 2000) / 100;
+    }
+
+    function initials(name) {
+      return (name.trim()[0] || "?").toUpperCase();
+    }
+
+    /* ============================= Tela: jogadores ============================= */
+    const playersList = $("players-list");
+    let playerRows = []; // inputs vivos na tela inicial
+
+    function addPlayerRow(name = "") {
+      const idx = playerRows.length;
+      const color = AVATAR_COLORS[idx % AVATAR_COLORS.length];
+
+      const row = document.createElement("div");
+      row.className = "player-row";
+      row.innerHTML = `
+        <div class="avatar" style="background:${color}">?</div>
+        <input type="text" maxlength="16" placeholder="Nome do jogador ${idx + 1}" autocomplete="off" />
+        <button class="remove" aria-label="Remover jogador">✕</button>
+      `;
+
+      const input = row.querySelector("input");
+      const avatar = row.querySelector(".avatar");
+      input.value = name;
+      if (name) avatar.textContent = initials(name);
+
+      input.addEventListener("input", () => {
+        avatar.textContent = input.value.trim() ? initials(input.value) : "?";
+      });
+
+      row.querySelector(".remove").addEventListener("click", () => {
+        if (playerRows.length <= 1) return; // pelo menos 1 jogador
+        playersList.removeChild(row);
+        playerRows = playerRows.filter((r) => r.row !== row);
+        refreshPlaceholders();
+      });
+
+      playersList.appendChild(row);
+      playerRows.push({ row, input, avatar });
+    }
+
+    function refreshPlaceholders() {
+      playerRows.forEach((r, i) => {
+        r.input.placeholder = `Nome do jogador ${i + 1}`;
+        r.avatar.style.background = AVATAR_COLORS[i % AVATAR_COLORS.length];
+      });
+    }
+
+    $("btn-add-player").addEventListener("click", () => {
+      if (playerRows.length >= 8) return;
+      addPlayerRow();
+      playerRows[playerRows.length - 1].input.focus();
+    });
+
+    $("btn-start-game").addEventListener("click", () => {
+      state.players = playerRows.map((r, i) => ({
+        name: r.input.value.trim() || `Jogador ${i + 1}`,
+        color: AVATAR_COLORS[i % AVATAR_COLORS.length],
+        wins: 0,
+      }));
+      state.round = 0;
+      startRound();
+    });
+
+    /* ============================= Rodada ============================= */
+    function startRound() {
+      state.round += 1;
+      state.target = randomTarget();
+      state.currentIdx = 0;
+      state.results = [];
+
+      $("round-badge").textContent = `Rodada ${state.round}`;
+      $("target-display").textContent = fmt(state.target);
+      show("screen-target");
+    }
+
+    $("btn-goto-play").addEventListener("click", () => setupPlayScreen());
+
+    function setupPlayScreen() {
+      const p = state.players[state.currentIdx];
+      $("play-target-badge").textContent = `Alvo: ${fmt(state.target)}s`;
+      $("play-avatar").textContent = initials(p.name);
+      $("play-avatar").style.background = p.color;
+      $("play-name").textContent = p.name;
+      resetTimerButton();
+      show("screen-play");
+    }
+
+    /* ============================= Cronômetro cego ============================= */
+    const timerBtn = $("btn-timer");
+
+    function resetTimerButton() {
+      state.running = false;
+      state.timerStart = null;
+      timerBtn.classList.remove("running");
+      $("timer-icon").textContent = "▶️";
+      $("timer-label").textContent = "TOCAR PARA INICIAR";
+      $("timer-sub").textContent = "o cronômetro ficará invisível";
+      $("play-hint").textContent = "Concentre-se… conte mentalmente! 🧠";
+    }
+
+    timerBtn.addEventListener("click", () => {
+      if (!state.running) {
+        // INICIAR
+        state.running = true;
+        state.timerStart = performance.now();
+        timerBtn.classList.add("running");
+        $("timer-icon").textContent = "⏱️";
+        $("timer-label").textContent = "CRONÔMETRO RODANDO…";
+        $("timer-sub").textContent = "toque para PARAR";
+        $("play-hint").textContent = `Pare o mais perto possível de ${fmt(state.target)}s!`;
+        vibrate(30);
+      } else {
+        // PARAR
+        const elapsed = (performance.now() - state.timerStart) / 1000;
+        state.running = false;
+        vibrate([30, 40, 30]);
+
+        const time = Math.round(elapsed * 100) / 100;
+        const diff = Math.round(Math.abs(time - state.target) * 100) / 100;
+        state.results.push({ idx: state.currentIdx, time, diff });
+        showPlayerResult(time, diff);
+      }
+    });
+
+    /* ============================= Resultado do jogador ============================= */
+    function showPlayerResult(time, diff) {
+      const p = state.players[state.currentIdx];
+      $("result-target-badge").textContent = `Alvo: ${fmt(state.target)}s`;
+      $("result-avatar").textContent = initials(p.name);
+      $("result-avatar").style.background = p.color;
+      $("result-name").textContent = p.name;
+      $("result-time").textContent = `${fmt(time)}s`;
+
+      const pill = $("result-diff");
+      pill.textContent = `Diferença: ${fmt(diff)}s`;
+      pill.className = "diff-pill " + (diff <= 0.15 ? "great" : diff <= 0.6 ? "ok" : "bad");
+
+      $("result-verdict").textContent =
+        diff === 0    ? "PERFEITO! Você é um relógio humano! 🤯" :
+        diff <= 0.15  ? "Impressionante! Quase cravou! 🎯" :
+        diff <= 0.6   ? "Muito bom! Chegou pertinho. 👏" :
+        diff <= 1.5   ? "Nada mal, dá pra melhorar! 💪" :
+                        "Eita… o tempo voou (ou se arrastou)! 😅";
+
+      const isLast = state.currentIdx === state.players.length - 1;
+      $("btn-next-player").textContent = isLast
+        ? (state.players.length === 1 ? "Ver resultado 🏁" : "Ver ranking 🏁")
+        : "Próximo jogador →";
+
+      show("screen-player-result");
+    }
+
+    $("btn-next-player").addEventListener("click", () => {
+      if (state.currentIdx < state.players.length - 1) {
+        state.currentIdx += 1;
+        setupPlayScreen();
+      } else {
+        showRanking();
+      }
+    });
+
+    /* ============================= Ranking ============================= */
+    function showRanking() {
+      const sorted = [...state.results].sort((a, b) => a.diff - b.diff);
+      const winner = state.players[sorted[0].idx];
+      winner.wins += 1;
+
+      $("ranking-badge").textContent = `Rodada ${state.round} — fim`;
+      $("winner-name").innerHTML = `<span>${escapeHtml(winner.name)}</span> venceu!`;
+      $("winner-detail").textContent =
+        state.players.length === 1
+          ? `Sua diferença foi de ${fmt(sorted[0].diff)}s. Tente bater esse recorde!`
+          : `Ficou a apenas ${fmt(sorted[0].diff)}s do alvo!`;
+      $("ranking-title").textContent = `Ranking — alvo ${fmt(state.target)}s`;
+
+      const medals = ["🥇", "🥈", "🥉"];
+      $("ranking-list").innerHTML = sorted.map((r, i) => {
+        const p = state.players[r.idx];
+        return `
+          <div class="rank-row ${i === 0 ? "winner" : ""}">
+            <div class="medal">${medals[i] || `${i + 1}º`}</div>
+            <div class="avatar" style="background:${p.color};width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#10132a;">${initials(p.name)}</div>
+            <div class="info">
+              <div class="nm">${escapeHtml(p.name)}</div>
+              <div class="tm">parou em ${fmt(r.time)}s</div>
+            </div>
+            <div class="delta">±${fmt(r.diff)}s<small>diferença</small></div>
+          </div>
+        `;
+      }).join("");
+
+      $("score-strip").innerHTML = state.players.map((p) => `
+        <div class="score-chip">
+          <div class="nm">${escapeHtml(p.name)}</div>
+          <div class="pts">${p.wins} 🏆</div>
+        </div>
+      `).join("");
+
+      vibrate([50, 60, 50, 60, 120]);
+      show("screen-ranking");
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+    }
+
+    $("btn-next-round").addEventListener("click", () => startRound());
+
+    $("btn-end-game").addEventListener("click", () => {
+      show("screen-home");
+    });
+
+    /* ============================= Boot ============================= */
+    addPlayerRow();
+    addPlayerRow();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
