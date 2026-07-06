@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Jogo do Cronômetro às Cegas — tente parar o cronômetro no tempo certo, sem ver!">
+  <title>Cronômetro às Cegas</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== Tela: Início ===== -->
+  <section id="screen-home" class="screen active">
+    <div class="container">
+      <div class="logo">⏱️</div>
+      <h1>Cronômetro<br>às Cegas</h1>
+      <p class="subtitle">Receba um tempo-alvo e tente parar o cronômetro no momento exato — <strong>sem ver os segundos passando</strong>. Quem chegar mais perto, vence!</p>
+
+      <div class="card">
+        <label class="field-label" for="player-count">Quantos jogadores?</label>
+        <div class="stepper">
+          <button type="button" id="btn-minus" class="stepper-btn" aria-label="Menos um jogador">−</button>
+          <span id="player-count" class="stepper-value">2</span>
+          <button type="button" id="btn-plus" class="stepper-btn" aria-label="Mais um jogador">+</button>
+        </div>
+        <div id="player-names" class="player-names"></div>
+      </div>
+
+      <button type="button" id="btn-start-game" class="btn btn-primary">Começar 🎮</button>
+      <p class="hint">💡 No modo de 1 jogador, tente bater seu recorde pessoal.</p>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Jogo ===== -->
+  <section id="screen-game" class="screen">
+    <div class="container">
+      <div class="round-info">
+        <span id="round-label" class="chip">Rodada 1</span>
+        <span id="turn-label" class="chip chip-accent">Vez de Jogador 1</span>
+      </div>
+
+      <div class="target-card">
+        <span class="target-title">🎯 Tempo-alvo</span>
+        <span id="target-time" class="target-value">7,43<small>s</small></span>
+      </div>
+
+      <div id="timer-area" class="timer-area">
+        <div id="timer-visual" class="timer-visual">
+          <div class="pulse-ring"></div>
+          <span id="timer-emoji">🙈</span>
+        </div>
+        <p id="timer-status" class="timer-status">Toque no botão para iniciar o cronômetro.<br>Ele ficará <strong>escondido</strong>!</p>
+      </div>
+
+      <button type="button" id="btn-timer" class="btn btn-timer btn-go">INICIAR ▶</button>
+      <p class="hint">Também funciona com a tecla <kbd>Espaço</kbd></p>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Entre jogadores ===== -->
+  <section id="screen-pass" class="screen">
+    <div class="container">
+      <div class="logo">🤫</div>
+      <h2>Tempo registrado!</h2>
+      <p class="subtitle">O resultado é segredo até o fim da rodada.<br>Passe o aparelho para:</p>
+      <p id="next-player-name" class="big-name">Jogador 2</p>
+      <button type="button" id="btn-next-player" class="btn btn-primary">Pode vir! 👍</button>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Resultado da rodada ===== -->
+  <section id="screen-result" class="screen">
+    <div class="container">
+      <h2 id="result-title">Resultado da rodada</h2>
+      <p class="subtitle">Alvo: <strong id="result-target">7,43s</strong></p>
+      <div id="result-list" class="result-list"></div>
+      <div id="solo-feedback" class="solo-feedback hidden"></div>
+      <div class="btn-row">
+        <button type="button" id="btn-next-round" class="btn btn-primary">Próxima rodada 🔁</button>
+        <button type="button" id="btn-finish" class="btn btn-ghost">Encerrar jogo</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Tela: Placar final ===== -->
+  <section id="screen-final" class="screen">
+    <div class="container">
+      <div class="logo">🏆</div>
+      <h2>Fim de jogo!</h2>
+      <p id="final-subtitle" class="subtitle"></p>
+      <div id="final-list" class="result-list"></div>
+      <button type="button" id="btn-play-again" class="btn btn-primary">Jogar novamente 🔄</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

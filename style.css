@@ -1,0 +1,422 @@
+/* ===== Cronômetro às Cegas ===== */
+
+:root {
+  --bg: #0f172a;
+  --bg-soft: #1e293b;
+  --card: #1e293b;
+  --card-border: #334155;
+  --text: #f1f5f9;
+  --text-dim: #94a3b8;
+  --accent: #38bdf8;
+  --accent-strong: #0ea5e9;
+  --green: #34d399;
+  --green-strong: #10b981;
+  --red: #f87171;
+  --red-strong: #ef4444;
+  --gold: #fbbf24;
+  --radius: 18px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 20% 0%, #1e3a5f33 0%, transparent 50%),
+                    radial-gradient(circle at 80% 100%, #0e7a5f22 0%, transparent 50%);
+  color: var(--text);
+  min-height: 100dvh;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== Telas ===== */
+.screen {
+  display: none;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.screen.active {
+  display: flex;
+}
+
+.container {
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.hidden { display: none !important; }
+
+/* ===== Tipografia ===== */
+.logo { font-size: 64px; line-height: 1; }
+
+h1 {
+  font-size: clamp(30px, 8vw, 40px);
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--accent), var(--green));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+h2 { font-size: clamp(24px, 6vw, 30px); }
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.subtitle strong { color: var(--text); }
+
+.hint {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+kbd {
+  background: var(--bg-soft);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.big-name {
+  font-size: clamp(28px, 8vw, 38px);
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* ===== Cartões ===== */
+.card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+/* ===== Stepper de jogadores ===== */
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.stepper-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid var(--card-border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 26px;
+  cursor: pointer;
+  transition: transform .1s, background .2s;
+}
+
+.stepper-btn:active { transform: scale(.9); background: var(--card-border); }
+
+.stepper-value {
+  font-size: 34px;
+  font-weight: 800;
+  min-width: 52px;
+}
+
+.player-names {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.player-names input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.player-names input:focus { border-color: var(--accent); }
+
+/* ===== Botões ===== */
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 16px 34px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .1s, filter .2s;
+  width: 100%;
+  max-width: 320px;
+}
+
+.btn:active { transform: scale(.96); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+  color: #04141f;
+  box-shadow: 0 8px 24px #0ea5e955;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--card-border);
+}
+
+.btn-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== Botão do cronômetro ===== */
+.btn-timer {
+  padding: 24px;
+  font-size: 24px;
+  letter-spacing: 1px;
+  max-width: 360px;
+}
+
+.btn-go {
+  background: linear-gradient(135deg, var(--green-strong), var(--green));
+  color: #03150e;
+  box-shadow: 0 8px 28px #10b98155;
+}
+
+.btn-stop {
+  background: linear-gradient(135deg, var(--red-strong), var(--red));
+  color: #1d0505;
+  box-shadow: 0 8px 28px #ef444455;
+  animation: throb 1s ease-in-out infinite;
+}
+
+@keyframes throb {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ===== Área do jogo ===== */
+.round-info {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chip {
+  background: var(--bg-soft);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.chip-accent {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.target-card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.target-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.target-value {
+  font-size: clamp(48px, 14vw, 64px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+.target-value small {
+  font-size: .45em;
+  color: var(--text-dim);
+  margin-left: 4px;
+}
+
+.timer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.timer-visual {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  border: 2px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+}
+
+.timer-visual.running .pulse-ring {
+  animation: pulse 1.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: .8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+.timer-status {
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 3em;
+}
+
+.timer-status strong { color: var(--text); }
+
+/* ===== Resultados ===== */
+.result-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.result-row {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  animation: slide-in .35s ease both;
+}
+
+.result-row:nth-child(2) { animation-delay: .08s; }
+.result-row:nth-child(3) { animation-delay: .16s; }
+.result-row:nth-child(4) { animation-delay: .24s; }
+.result-row:nth-child(5) { animation-delay: .32s; }
+.result-row:nth-child(6) { animation-delay: .40s; }
+.result-row:nth-child(7) { animation-delay: .48s; }
+.result-row:nth-child(8) { animation-delay: .56s; }
+
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.result-row.winner {
+  border-color: var(--gold);
+  box-shadow: 0 0 18px #fbbf2433;
+}
+
+.result-medal { font-size: 26px; width: 34px; text-align: center; }
+
+.result-info { flex: 1; min-width: 0; }
+
+.result-name {
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-detail {
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.result-diff {
+  font-weight: 800;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.result-diff.good { color: var(--green); }
+.result-diff.ok { color: var(--gold); }
+.result-diff.bad { color: var(--red); }
+
+.result-points {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.solo-feedback {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.solo-feedback .record {
+  color: var(--gold);
+  font-weight: 700;
+}
