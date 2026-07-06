@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Cronômetro Cego — jogo de adivinhar o tempo no cronômetro sem olhar">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Cronômetro Cego ⏱️</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Tela inicial: cadastro de jogadores -->
+    <section id="screen-setup" class="screen active">
+      <h1 class="logo">⏱️<br>Cronômetro<br>Cego</h1>
+      <p class="subtitle">Receba um tempo alvo entre 0 e 20 segundos.<br>Inicie e pare o cronômetro <strong>sem olhar</strong>.<br>Quem chegar mais perto, vence!</p>
+
+      <div class="card">
+        <h2>Jogadores</h2>
+        <ul id="player-list" class="player-list"></ul>
+        <div class="add-player-row">
+          <input type="text" id="player-name-input" placeholder="Nome do jogador" maxlength="20" autocomplete="off">
+          <button id="btn-add-player" class="btn btn-small" type="button">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Rodadas</h2>
+        <div class="rounds-picker">
+          <button class="btn btn-small round-opt" data-rounds="1" type="button">1</button>
+          <button class="btn btn-small round-opt selected" data-rounds="3" type="button">3</button>
+          <button class="btn btn-small round-opt" data-rounds="5" type="button">5</button>
+          <button class="btn btn-small round-opt" data-rounds="10" type="button">10</button>
+        </div>
+      </div>
+
+      <button id="btn-start-game" class="btn btn-primary btn-big" type="button" disabled>Começar jogo</button>
+    </section>
+
+    <!-- Tela de anúncio do alvo -->
+    <section id="screen-target" class="screen">
+      <p class="round-label" id="target-round-label">Rodada 1 de 3</p>
+      <p class="turn-label">Vez de</p>
+      <h2 class="player-turn" id="target-player-name">Jogador</h2>
+      <div class="target-box">
+        <p class="target-caption">Seu tempo alvo é</p>
+        <p class="target-time" id="target-time-display">0,00</p>
+        <p class="target-caption">segundos</p>
+      </div>
+      <p class="hint">Memorize o tempo! O cronômetro ficará <strong>escondido</strong>.</p>
+      <button id="btn-ready" class="btn btn-primary btn-big" type="button">Estou pronto</button>
+    </section>
+
+    <!-- Tela do cronômetro (às cegas) -->
+    <section id="screen-timer" class="screen">
+      <p class="round-label" id="timer-round-label">Rodada 1 de 3</p>
+      <p class="timer-target-reminder" id="timer-target-reminder">Alvo: 0,00 s</p>
+      <div class="blind-display" id="blind-display">
+        <span class="blind-icon">🙈</span>
+        <span class="blind-text" id="blind-text">Toque para iniciar</span>
+      </div>
+      <button id="btn-timer" class="btn btn-timer btn-big" type="button">▶ Iniciar</button>
+    </section>
+
+    <!-- Tela de resultado da tentativa -->
+    <section id="screen-result" class="screen">
+      <p class="round-label" id="result-round-label">Rodada 1 de 3</p>
+      <h2 class="player-turn" id="result-player-name">Jogador</h2>
+      <div class="result-grid">
+        <div class="result-item">
+          <span class="result-caption">Alvo</span>
+          <span class="result-value" id="result-target">0,00 s</span>
+        </div>
+        <div class="result-item">
+          <span class="result-caption">Seu tempo</span>
+          <span class="result-value" id="result-actual">0,00 s</span>
+        </div>
+      </div>
+      <div class="diff-box" id="diff-box">
+        <span class="diff-caption">Diferença</span>
+        <span class="diff-value" id="result-diff">0,00 s</span>
+        <span class="diff-rating" id="result-rating">🎯 Perfeito!</span>
+      </div>
+      <button id="btn-next" class="btn btn-primary btn-big" type="button">Próximo</button>
+    </section>
+
+    <!-- Tela de resultado da rodada -->
+    <section id="screen-round" class="screen">
+      <p class="round-label" id="round-summary-label">Resultado da rodada 1</p>
+      <h2 class="round-winner" id="round-winner">🏆 Fulano venceu!</h2>
+      <table class="score-table" id="round-table"></table>
+      <button id="btn-next-round" class="btn btn-primary btn-big" type="button">Próxima rodada</button>
+    </section>
+
+    <!-- Tela final -->
+    <section id="screen-final" class="screen">
+      <h1 class="final-title">🏆</h1>
+      <h2 class="round-winner" id="final-winner">Fulano é o campeão!</h2>
+      <table class="score-table" id="final-table"></table>
+      <button id="btn-play-again" class="btn btn-primary btn-big" type="button">Jogar de novo</button>
+      <button id="btn-new-players" class="btn btn-small btn-ghost" type="button">Trocar jogadores</button>
+    </section>
+
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
