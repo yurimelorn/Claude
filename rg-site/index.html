@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R.G. — Rendição Garantida</title>
+<link rel="preconnect" href="https://ddragon.leagueoflegends.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Metal+Mania&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260703i">
+</head>
+<body>
+
+<!-- GATE: precisa digitar o nome antes de entrar -->
+<div id="gate" class="gate">
+  <div class="gate-fog"></div>
+  <div class="gate-box">
+    <div class="gate-crest">R.G.</div>
+    <h1>RENDIÇÃO GARANTIDA</h1>
+    <p class="gate-sub">Antes de cruzar este portão, diga quem você é.<br>O Rift vai saber de qualquer forma.</p>
+    <form id="gate-form">
+      <input type="text" id="gate-name" placeholder="Seu nome de invocador..." maxlength="30" autocomplete="off" required>
+      <button type="submit">ENTRAR</button>
+    </form>
+    <p class="gate-hint">Isso te adiciona à lista de "Quem vai jogar hoje?"</p>
+  </div>
+</div>
+
+<!-- SITE -->
+<div id="site" class="site hidden">
+
+  <header class="topbar">
+    <div class="logo">R.G. <span>— Rendição Garantida</span></div>
+    <div class="welcome" id="welcome-msg"></div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <main id="content"></main>
+
+  <footer class="credits">
+    <div class="credits-label">R.G. é propriedade de:</div>
+    <nav class="credits-names" id="credits"></nav>
+  </footer>
+
+  <footer class="footer">
+    feito nas trincheiras do Rift, com muito flame e zero comunicação de call.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="script.js?v=20260703i"></script>
+</body>
+</html>

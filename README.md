@@ -62,3 +62,26 @@ branch e a pasta raiz (`/`). O jogo ficará disponível em
 | `manifest.webmanifest` | Metadados para instalar como app no celular |
 | `sw.js` | Service worker — cache para funcionar offline |
 | `icon.svg`, `icon-maskable.svg` | Ícones do app |
+
+---
+
+# 🔨 Site R.G. — Caça à Rek'Sai (`rg-site/`)
+
+A pasta [`rg-site/`](rg-site/) contém o site **R.G. — Rendição Garantida**, que
+inclui o minigame **Caça à Rek'Sai**: um jogo da topeira do Vazio onde a
+Rek'Sai sai dos 9 túneis e você tem 30 segundos para acertá-la com a marreta.
+Cada acerto vale 1 ponto (2 se ela estiver enfurecida), e o ranking dos
+caçadores fica salvo no aparelho.
+
+O jogo agora é **totalmente funcional no celular**: os toques são registrados
+na hora (pointer events), sem zoom acidental de duplo toque, com vibração ao
+acertar e com uma arte reserva da Rek'Sai caso o CDN da Riot esteja fora do ar.
+
+Para rodar, sirva a pasta do site:
+
+```bash
+cd rg-site
+python3 -m http.server 8000
+```
+
+E abra <http://localhost:8000>. No Windows, dá para usar o `serve-site.cmd`.
