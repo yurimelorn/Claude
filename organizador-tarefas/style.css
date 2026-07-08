@@ -1,0 +1,290 @@
+/* ===== Organizador de Tarefas — estilo mobile-first ===== */
+:root {
+  --fundo: #12131f;
+  --superficie: #1e2032;
+  --superficie-2: #272a40;
+  --texto: #eef0ff;
+  --texto-suave: #9aa0c3;
+  --acento: #6c7bff;
+  --acento-forte: #8a96ff;
+  --verde: #3ecf8e;
+  --vermelho: #ff6b6b;
+  --raio: 14px;
+  --sombra: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== Cabeçalho ===== */
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 20px 14px;
+  background: var(--superficie);
+  box-shadow: var(--sombra);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topo h1 { font-size: 1.25rem; font-weight: 700; }
+
+.contador {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  background: var(--superficie-2);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+/* ===== Painéis / abas ===== */
+main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  padding-bottom: 24px;
+}
+
+.painel { display: none; }
+.painel.ativo { display: block; }
+
+/* ===== Formulário de nova tarefa ===== */
+.linha-entrada {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+#entrada-tarefa {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  font-size: 1rem;
+  border: 2px solid transparent;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--texto);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#entrada-tarefa:focus { border-color: var(--acento); }
+#entrada-tarefa::placeholder { color: var(--texto-suave); }
+
+#botao-voz, #botao-add {
+  flex-shrink: 0;
+  width: 52px;
+  border: none;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--acento-forte);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+#botao-add { background: var(--acento); color: #fff; }
+#botao-voz:active, #botao-add:active { transform: scale(0.94); }
+
+#botao-voz.gravando {
+  background: var(--vermelho);
+  color: #fff;
+  animation: pulsar 1.2s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.55); }
+  50% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+}
+
+.status-voz {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  margin: -8px 4px 12px;
+}
+
+/* ===== Lista de tarefas ===== */
+.lista { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+.tarefa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--superficie);
+  border-radius: var(--raio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  animation: entrar 0.25s ease;
+}
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tarefa.saindo {
+  animation: sair 0.3s ease forwards;
+}
+
+@keyframes sair {
+  to { opacity: 0; transform: translateX(40px); height: 0; padding: 0; margin: 0; }
+}
+
+.botao-ok {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--texto-suave);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  transition: all 0.15s;
+}
+
+.botao-ok:active, .botao-ok.marcado {
+  border-color: var(--verde);
+  background: var(--verde);
+  color: #0b2b1d;
+}
+
+.tarefa .texto {
+  flex: 1;
+  font-size: 1rem;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.tarefa .hora-criacao {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--texto-suave);
+  margin-top: 3px;
+}
+
+.botao-excluir {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  opacity: 0.6;
+}
+.botao-excluir:active { color: var(--vermelho); opacity: 1; }
+
+/* ===== Histórico ===== */
+.grupo-dia { margin-bottom: 22px; }
+
+.grupo-dia h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--acento-forte);
+  text-transform: capitalize;
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+.item-historico {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  background: var(--superficie);
+  border-radius: var(--raio);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.item-historico .hora {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.item-historico .texto {
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--texto-suave);
+  word-break: break-word;
+}
+
+.botao-limpar {
+  display: block;
+  margin: 24px auto 8px;
+  padding: 12px 24px;
+  border: 1px solid var(--vermelho);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--vermelho);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.botao-limpar:active { background: rgba(255, 107, 107, 0.15); }
+
+/* ===== Estado vazio ===== */
+.vazio {
+  text-align: center;
+  color: var(--texto-suave);
+  padding: 48px 16px;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+.vazio small { font-size: 0.85rem; }
+
+/* ===== Barra de abas inferior ===== */
+.abas {
+  display: flex;
+  background: var(--superficie);
+  border-top: 1px solid var(--superficie-2);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.aba {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.aba.ativo { color: var(--acento-forte); }
+
+/* ===== Telas maiores (iPad) ===== */
+@media (min-width: 700px) {
+  main { max-width: 640px; margin: 0 auto; width: 100%; }
+  .topo { padding-left: max(20px, calc(50vw - 320px)); padding-right: max(20px, calc(50vw - 320px)); }
+}
