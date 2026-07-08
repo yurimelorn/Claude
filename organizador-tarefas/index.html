@@ -49,6 +49,36 @@
       </p>
     </section>
 
+    <!-- Aba: Calendário -->
+    <section id="painel-calendario" class="painel">
+      <div class="cal-cabecalho">
+        <button id="cal-anterior" aria-label="Mês anterior">‹</button>
+        <h2 id="cal-titulo"></h2>
+        <button id="cal-proximo" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="cal-semana">
+        <span>dom</span><span>seg</span><span>ter</span><span>qua</span><span>qui</span><span>sex</span><span>sáb</span>
+      </div>
+      <div id="cal-grade" class="cal-grade"></div>
+
+      <div class="cal-dia">
+        <h3 id="cal-dia-titulo"></h3>
+        <form id="form-cal" autocomplete="off">
+          <div class="linha-entrada">
+            <input type="text" id="cal-entrada" placeholder="Tarefa para este dia..."
+                   enterkeyhint="done" maxlength="300">
+            <button type="submit" id="cal-botao-add" title="Adicionar neste dia" aria-label="Adicionar">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                <path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6z"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+        <ul id="cal-lista" class="lista"></ul>
+        <p id="cal-vazio" class="vazio-menor" hidden>Nenhuma tarefa neste dia.</p>
+      </div>
+    </section>
+
     <!-- Aba: Histórico -->
     <section id="painel-historico" class="painel">
       <div id="conteudo-historico"></div>
@@ -56,7 +86,6 @@
         Nada concluído ainda.<br>
         <small>Quando você marcar tarefas como feitas, elas aparecem aqui.</small>
       </p>
-      <button id="botao-limpar" class="botao-limpar" hidden>Apagar todo o histórico</button>
     </section>
   </main>
 
@@ -66,6 +95,12 @@
         <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm-2 14-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
       </svg>
       <span>Tarefas</span>
+    </button>
+    <button id="aba-calendario" class="aba" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">
+        <path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm4 6H7v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2zm-8 4H7v-2h2v2zm4 0h-2v-2h2v2z"/>
+      </svg>
+      <span>Calendário</span>
     </button>
     <button id="aba-historico" class="aba" role="tab" aria-selected="false">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true">

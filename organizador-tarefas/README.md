@@ -7,6 +7,8 @@ Ele **não precisa de App Store**: você instala direto pelo Safari do iPad.
 
 - ✅ **Adicionar serviços/tarefas** a fazer, digitando ou **ditando por voz** (🎙️ em português)
 - ✅ Ao tocar no círculo de "ok", a tarefa **some da lista** com uma animação
+- ✅ O que **não for concluído no dia passa automaticamente para o dia seguinte**, com a etiqueta "veio de DD/MM"
+- ✅ Aba de **Calendário** para agendar tarefas em qualquer dia — elas aparecem na lista principal quando o dia chega (dias com tarefas ganham um pontinho verde)
 - ✅ Aba de **Histórico** com tudo que você já fez, **agrupado por dia** (Hoje, Ontem, datas) e com o **horário** exato de conclusão
 - ✅ Funciona **offline** depois da primeira visita (service worker)
 - ✅ Os dados ficam salvos **no próprio aparelho** (localStorage) — nada vai para servidor nenhum
@@ -42,9 +44,9 @@ Como o repositório é seu, ninguém mais precisa saber o endereço — é prati
 
 | Arquivo | Função |
 |---|---|
-| `index.html` | Estrutura das duas abas (Tarefas e Histórico) |
+| `index.html` | Estrutura das três abas (Tarefas, Calendário e Histórico) |
 | `style.css` | Visual mobile-first, tema escuro |
-| `app.js` | Lógica: tarefas, histórico por dia/hora, voz, persistência |
+| `app.js` | Lógica: tarefas, calendário, histórico por dia/hora, voz, persistência |
 | `sw.js` | Service worker (offline) |
 | `manifest.webmanifest` | Metadados de instalação do PWA |
 | `icon-*.png` | Ícones do app |

@@ -70,7 +70,7 @@ main {
   margin-bottom: 16px;
 }
 
-#entrada-tarefa {
+#entrada-tarefa, #cal-entrada {
   flex: 1;
   min-width: 0;
   padding: 14px 16px;
@@ -83,10 +83,10 @@ main {
   transition: border-color 0.2s;
 }
 
-#entrada-tarefa:focus { border-color: var(--acento); }
-#entrada-tarefa::placeholder { color: var(--texto-suave); }
+#entrada-tarefa:focus, #cal-entrada:focus { border-color: var(--acento); }
+#entrada-tarefa::placeholder, #cal-entrada::placeholder { color: var(--texto-suave); }
 
-#botao-voz, #botao-add {
+#botao-voz, #botao-add, #cal-botao-add {
   flex-shrink: 0;
   width: 52px;
   border: none;
@@ -100,8 +100,8 @@ main {
   transition: background 0.2s, transform 0.1s;
 }
 
-#botao-add { background: var(--acento); color: #fff; }
-#botao-voz:active, #botao-add:active { transform: scale(0.94); }
+#botao-add, #cal-botao-add { background: var(--acento); color: #fff; }
+#botao-voz:active, #botao-add:active, #cal-botao-add:active { transform: scale(0.94); }
 
 #botao-voz.gravando {
   background: var(--vermelho);
@@ -231,18 +231,104 @@ main {
   word-break: break-word;
 }
 
-.botao-limpar {
-  display: block;
-  margin: 24px auto 8px;
-  padding: 12px 24px;
-  border: 1px solid var(--vermelho);
-  border-radius: var(--raio);
-  background: transparent;
-  color: var(--vermelho);
-  font-size: 0.9rem;
+/* ===== Calendário ===== */
+.cal-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cal-cabecalho h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.cal-cabecalho button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: var(--superficie);
+  color: var(--acento-forte);
+  font-size: 1.5rem;
+  line-height: 1;
   cursor: pointer;
 }
-.botao-limpar:active { background: rgba(255, 107, 107, 0.15); }
+.cal-cabecalho button:active { background: var(--superficie-2); }
+
+.cal-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin-bottom: 6px;
+}
+
+.cal-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.cal-celula {
+  position: relative;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 10px;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cal-celula.hoje {
+  outline: 2px solid var(--acento);
+  outline-offset: -2px;
+  font-weight: 700;
+}
+
+.cal-celula.selecionado {
+  background: var(--acento);
+  color: #fff;
+  font-weight: 700;
+}
+
+.cal-celula.com-tarefas::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--verde);
+}
+.cal-celula.selecionado.com-tarefas::after { background: #fff; }
+
+.cal-dia h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--acento-forte);
+  text-transform: capitalize;
+  margin-bottom: 10px;
+  padding-left: 4px;
+}
+
+.vazio-menor {
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  padding: 20px 0;
+}
+
+.hora-criacao.atrasada { color: var(--vermelho); }
 
 /* ===== Estado vazio ===== */
 .vazio {
