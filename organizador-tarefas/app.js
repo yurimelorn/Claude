@@ -16,6 +16,9 @@
   const vazioTarefas = $('vazio-tarefas');
   const conteudoHistorico = $('conteudo-historico');
   const vazioHistorico = $('vazio-historico');
+  const buscaHistorico = $('busca-historico');
+  const resultadoBusca = $('resultado-busca');
+  const buscaSemResultado = $('busca-sem-resultado');
   const entrada = $('entrada-tarefa');
   const form = $('form-nova');
   const botaoVoz = $('botao-voz');
@@ -151,12 +154,56 @@
     return li;
   }
 
-  // ---- Renderização: histórico agrupado por dia ----
+  // ---- Busca: ignora acentos e maiúsculas/minúsculas ----
+  function normalizar(s) {
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  // Devolve o texto com as partes que batem com o termo destacadas em <mark>
+  function textoComDestaque(texto, termo) {
+    const span = document.createElement('span');
+    if (!termo) {
+      span.textContent = texto;
+      return span;
+    }
+    const letras = [...texto];
+    const norm = letras.map((c) => {
+      const n = normalizar(c);
+      return n.length === 1 ? n : c.toLowerCase();
+    }).join('');
+
+    let i = 0;
+    let idx;
+    while ((idx = norm.indexOf(termo, i)) !== -1) {
+      span.appendChild(document.createTextNode(letras.slice(i, idx).join('')));
+      const mark = document.createElement('mark');
+      mark.textContent = letras.slice(idx, idx + termo.length).join('');
+      span.appendChild(mark);
+      i = idx + termo.length;
+    }
+    span.appendChild(document.createTextNode(letras.slice(i).join('')));
+    return span;
+  }
+
+  // ---- Renderização: histórico agrupado por dia (com busca) ----
   function renderizarHistorico() {
     conteudoHistorico.innerHTML = '';
     vazioHistorico.hidden = historico.length > 0;
 
-    const ordenado = [...historico].sort((a, b) => b.concluidaEm - a.concluidaEm);
+    const termo = normalizar(buscaHistorico.value.trim());
+    const ordenado = [...historico]
+      .sort((a, b) => b.concluidaEm - a.concluidaEm)
+      .filter((item) => !termo || normalizar(item.texto).includes(termo));
+
+    if (termo) {
+      resultadoBusca.hidden = false;
+      resultadoBusca.textContent = ordenado.length === 0
+        ? ''
+        : `${ordenado.length} resultado${ordenado.length > 1 ? 's' : ''} para "${buscaHistorico.value.trim()}"`;
+    } else {
+      resultadoBusca.hidden = true;
+    }
+    buscaSemResultado.hidden = !(termo && ordenado.length === 0 && historico.length > 0);
 
     const grupos = new Map();
     for (const item of ordenado) {
@@ -181,9 +228,8 @@
         hora.className = 'hora';
         hora.textContent = fmtHora.format(new Date(item.concluidaEm));
 
-        const texto = document.createElement('span');
+        const texto = textoComDestaque(item.texto, termo);
         texto.className = 'texto';
-        texto.textContent = item.texto;
 
         div.append(hora, texto);
         secao.appendChild(div);
@@ -298,6 +344,8 @@
     calEntrada.value = '';
     calEntrada.focus();
   });
+
+  buscaHistorico.addEventListener('input', renderizarHistorico);
 
   $('cal-anterior').addEventListener('click', () => {
     mesExibido = new Date(mesExibido.getFullYear(), mesExibido.getMonth() - 1, 1);

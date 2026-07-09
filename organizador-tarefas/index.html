@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
   <title>Minhas Tarefas</title>
   <meta name="description" content="Organizador pessoal de tarefas com voz e histórico">
-  <meta name="theme-color" content="#1a1b2e">
+  <meta name="theme-color" content="#000000">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" href="icon-192.png">
@@ -27,7 +27,8 @@
       <form id="form-nova" autocomplete="off">
         <div class="linha-entrada">
           <input type="text" id="entrada-tarefa" placeholder="O que você precisa fazer?"
-                 enterkeyhint="done" maxlength="300">
+                 enterkeyhint="done" maxlength="300"
+                 autocorrect="off" spellcheck="false" autocapitalize="off">
           <button type="button" id="botao-voz" title="Ditar tarefa por voz" aria-label="Ditar por voz">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
               <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
@@ -66,7 +67,8 @@
         <form id="form-cal" autocomplete="off">
           <div class="linha-entrada">
             <input type="text" id="cal-entrada" placeholder="Tarefa para este dia..."
-                   enterkeyhint="done" maxlength="300">
+                   enterkeyhint="done" maxlength="300"
+                   autocorrect="off" spellcheck="false" autocapitalize="off">
             <button type="submit" id="cal-botao-add" title="Adicionar neste dia" aria-label="Adicionar">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
                 <path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6z"/>
@@ -81,7 +83,16 @@
 
     <!-- Aba: Histórico -->
     <section id="painel-historico" class="painel">
+      <div class="linha-entrada">
+        <input type="search" id="busca-historico" placeholder="🔍 Pesquisar em tudo que você já fez..."
+               enterkeyhint="search" autocorrect="off" spellcheck="false" autocapitalize="off">
+      </div>
+      <p id="resultado-busca" class="resultado-busca" hidden></p>
       <div id="conteudo-historico"></div>
+      <p id="busca-sem-resultado" class="vazio" hidden>
+        Nada encontrado.<br>
+        <small>Tente outra palavra — a busca ignora acentos e maiúsculas.</small>
+      </p>
       <p id="vazio-historico" class="vazio" hidden>
         Nada concluído ainda.<br>
         <small>Quando você marcar tarefas como feitas, elas aparecem aqui.</small>

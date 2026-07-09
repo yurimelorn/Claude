@@ -1,16 +1,16 @@
 /* ===== Organizador de Tarefas — estilo mobile-first ===== */
 :root {
-  --fundo: #12131f;
-  --superficie: #1e2032;
-  --superficie-2: #272a40;
-  --texto: #eef0ff;
-  --texto-suave: #9aa0c3;
-  --acento: #6c7bff;
-  --acento-forte: #8a96ff;
-  --verde: #3ecf8e;
-  --vermelho: #ff6b6b;
+  --fundo: #000000;
+  --superficie: #171310;
+  --superficie-2: #261e17;
+  --texto: #fff3e6;
+  --texto-suave: #a8927c;
+  --acento: #ff7a00;
+  --acento-forte: #ff9633;
+  --verde: #ffb347;
+  --vermelho: #ff5c5c;
   --raio: 14px;
-  --sombra: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --sombra: 0 4px 16px rgba(0, 0, 0, 0.55);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,7 +100,7 @@ main {
   transition: background 0.2s, transform 0.1s;
 }
 
-#botao-add, #cal-botao-add { background: var(--acento); color: #fff; }
+#botao-add, #cal-botao-add { background: var(--acento); color: #1f0e00; }
 #botao-voz:active, #botao-add:active, #cal-botao-add:active { transform: scale(0.94); }
 
 #botao-voz.gravando {
@@ -163,9 +163,9 @@ main {
 }
 
 .botao-ok:active, .botao-ok.marcado {
-  border-color: var(--verde);
-  background: var(--verde);
-  color: #0b2b1d;
+  border-color: var(--acento);
+  background: var(--acento);
+  color: #1f0e00;
 }
 
 .tarefa .texto {
@@ -231,6 +231,37 @@ main {
   word-break: break-word;
 }
 
+.item-historico mark {
+  background: var(--acento);
+  color: #1f0e00;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+.resultado-busca {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  margin: -8px 4px 14px;
+}
+
+#busca-historico {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  font-size: 1rem;
+  border: 2px solid transparent;
+  border-radius: var(--raio);
+  background: var(--superficie);
+  color: var(--texto);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s;
+}
+#busca-historico:focus { border-color: var(--acento); }
+#busca-historico::placeholder { color: var(--texto-suave); }
+
 /* ===== Calendário ===== */
 .cal-cabecalho {
   display: flex;
@@ -295,7 +326,7 @@ main {
 
 .cal-celula.selecionado {
   background: var(--acento);
-  color: #fff;
+  color: #1f0e00;
   font-weight: 700;
 }
 
@@ -310,7 +341,7 @@ main {
   border-radius: 50%;
   background: var(--verde);
 }
-.cal-celula.selecionado.com-tarefas::after { background: #fff; }
+.cal-celula.selecionado.com-tarefas::after { background: #1f0e00; }
 
 .cal-dia h3 {
   font-size: 0.95rem;
