@@ -451,9 +451,24 @@
     });
   }
 
-  // ---- Service worker (offline / instalável) ----
+  // ---- Service worker (offline / instalável) + aviso de atualização ----
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const avisoAtualizacao = $('aviso-atualizacao');
+    // Se já havia um controlador, uma troca de controlador significa versão nova
+    const tinhaControlador = !!navigator.serviceWorker.controller;
+
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // Confere se existe versão nova sempre que o app volta a ficar visível
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) reg.update().catch(() => {});
+      });
+    }).catch(() => {});
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (tinhaControlador) avisoAtualizacao.hidden = false;
+    });
+
+    avisoAtualizacao.addEventListener('click', () => location.reload());
   }
 
   // ---- Inicialização ----
