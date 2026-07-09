@@ -515,6 +515,19 @@ main {
 .item-historico .coluna { flex: 1; min-width: 0; }
 .item-historico { align-items: flex-start; }
 
+.botao-devolver {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--acento-forte);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  opacity: 0.75;
+  align-self: center;
+}
+.botao-devolver:active { background: var(--superficie-2); opacity: 1; }
+
 /* ===== Menu de concluir (folha inferior) ===== */
 .folha { position: fixed; inset: 0; z-index: 120; }
 .folha[hidden] { display: none; }

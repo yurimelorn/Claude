@@ -342,16 +342,24 @@
   visorAnt.addEventListener('click', () => navegarVisor(-1));
   visorProx.addEventListener('click', () => navegarVisor(1));
 
-  // Deslizar com o dedo para trocar de imagem
+  // Deslizar: para os lados troca de imagem, para baixo fecha
   let toqueX = null;
+  let toqueY = null;
   visor.addEventListener('touchstart', (e) => {
     toqueX = e.touches[0].clientX;
+    toqueY = e.touches[0].clientY;
   }, { passive: true });
   visor.addEventListener('touchend', (e) => {
     if (toqueX === null) return;
     const dx = e.changedTouches[0].clientX - toqueX;
+    const dy = e.changedTouches[0].clientY - toqueY;
     toqueX = null;
-    if (Math.abs(dx) > 50) navegarVisor(dx < 0 ? 1 : -1);
+    toqueY = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      navegarVisor(dx < 0 ? 1 : -1);
+    } else if (dy > 80 && Math.abs(dy) > Math.abs(dx)) {
+      visor.hidden = true;
+    }
   }, { passive: true });
 
   document.addEventListener('keydown', (e) => {
@@ -563,7 +571,18 @@
         coluna.appendChild(texto);
         preencherAnexos(coluna, item, false);
 
-        div.append(hora, coluna);
+        const devolver = document.createElement('button');
+        devolver.className = 'botao-devolver';
+        devolver.title = 'Devolver para as tarefas';
+        devolver.setAttribute('aria-label', 'Devolver para as tarefas pendentes');
+        devolver.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>';
+        devolver.addEventListener('click', () => {
+          if (confirm(`Devolver "${item.texto}" para a lista de tarefas pendentes?`)) {
+            devolverTarefa(item.id);
+          }
+        });
+
+        div.append(hora, coluna, devolver);
         secao.appendChild(div);
       }
       conteudoHistorico.appendChild(secao);
@@ -672,6 +691,23 @@
     } else {
       finalizar();
     }
+  }
+
+  // Devolve uma tarefa concluída para a lista de pendentes (desfazer conclusão)
+  function devolverTarefa(id) {
+    const idx = historico.findIndex((h) => h.id === id);
+    if (idx === -1) return;
+    const item = historico[idx];
+    historico.splice(idx, 1);
+    tarefas.unshift({
+      id: item.id,
+      texto: item.texto,
+      criadaEm: item.criadaEm || Date.now(),
+      paraDia: hoje(),
+      anexos: item.anexos || [],
+    });
+    salvar();
+    renderizarTudo();
   }
 
   form.addEventListener('submit', (e) => {
