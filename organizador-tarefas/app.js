@@ -378,6 +378,43 @@
     if (!document.hidden) renderizarTudo();
   });
 
+  // ---- Botão de fechar o teclado ----
+  const botaoTeclado = $('fechar-teclado');
+
+  // Mantém o botão logo acima do teclado (o teclado encolhe a "janela visível")
+  function posicionarBotaoTeclado() {
+    const vv = window.visualViewport;
+    const alturaTeclado = vv ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop) : 0;
+    botaoTeclado.style.bottom = `${alturaTeclado + 16}px`;
+  }
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target.matches('input')) {
+      botaoTeclado.hidden = false;
+      posicionarBotaoTeclado();
+    }
+  });
+
+  document.addEventListener('focusout', () => {
+    // pequeno atraso: se o foco só pulou de um campo para outro, o botão fica
+    setTimeout(() => {
+      const ativo = document.activeElement;
+      if (!ativo || ativo.tagName !== 'INPUT') botaoTeclado.hidden = true;
+    }, 120);
+  });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', posicionarBotaoTeclado);
+    window.visualViewport.addEventListener('scroll', posicionarBotaoTeclado);
+  }
+
+  // pointerdown + preventDefault: fecha sem "roubar" o toque para outro elemento
+  botaoTeclado.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    botaoTeclado.hidden = true;
+  });
+
   // ---- Reconhecimento de voz ----
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
 

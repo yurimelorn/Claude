@@ -401,6 +401,28 @@ main {
 }
 .vazio small { font-size: 0.85rem; }
 
+/* ===== Botão de fechar o teclado ===== */
+.fechar-teclado {
+  position: fixed;
+  right: 16px;
+  bottom: 96px;
+  z-index: 90;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: var(--acento);
+  color: #1f0e00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.45);
+  cursor: pointer;
+  animation: entrar 0.2s ease;
+}
+.fechar-teclado:active { transform: scale(0.92); }
+.fechar-teclado[hidden] { display: none; }
+
 /* ===== Barra de abas inferior ===== */
 .abas {
   display: flex;
