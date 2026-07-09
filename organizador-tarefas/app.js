@@ -295,31 +295,90 @@
     link.remove();
   }
 
-  // ---- Visualizador de imagem ----
+  // ---- Visualizador de imagem (com setas, deslizar e contador) ----
   const visor = $('visor');
   const visorImg = $('visor-img');
   const visorRemover = $('visor-remover');
-  let visorAtual = null;
+  const visorAnt = $('visor-ant');
+  const visorProx = $('visor-prox');
+  const visorContagem = $('visor-contagem');
+  let visorAtual = null; // { imagens, indice, dono }
 
   function abrirVisor(anexo, dono, removivel) {
-    visorAtual = { anexo, dono };
-    visorImg.removeAttribute('src');
-    urlDoAnexo(anexo.id).then((u) => { if (u) visorImg.src = u; });
+    const imagens = (dono.anexos || []).filter((a) => (a.tipo || '').startsWith('image/'));
+    const indice = Math.max(0, imagens.findIndex((a) => a.id === anexo.id));
+    visorAtual = { imagens, indice, dono };
     visorRemover.hidden = !removivel;
     visor.hidden = false;
+    mostrarImagemVisor();
   }
+
+  function mostrarImagemVisor() {
+    const { imagens, indice } = visorAtual;
+    const anexo = imagens[indice];
+    if (!anexo) {
+      visor.hidden = true;
+      return;
+    }
+    visorImg.removeAttribute('src');
+    urlDoAnexo(anexo.id).then((u) => { if (u) visorImg.src = u; });
+
+    const varias = imagens.length > 1;
+    visorAnt.hidden = !varias;
+    visorProx.hidden = !varias;
+    visorAnt.disabled = indice === 0;
+    visorProx.disabled = indice === imagens.length - 1;
+    visorContagem.textContent = varias ? `${indice + 1} / ${imagens.length}` : '';
+  }
+
+  function navegarVisor(passo) {
+    if (!visorAtual) return;
+    const novo = visorAtual.indice + passo;
+    if (novo < 0 || novo >= visorAtual.imagens.length) return;
+    visorAtual.indice = novo;
+    mostrarImagemVisor();
+  }
+
+  visorAnt.addEventListener('click', () => navegarVisor(-1));
+  visorProx.addEventListener('click', () => navegarVisor(1));
+
+  // Deslizar com o dedo para trocar de imagem
+  let toqueX = null;
+  visor.addEventListener('touchstart', (e) => {
+    toqueX = e.touches[0].clientX;
+  }, { passive: true });
+  visor.addEventListener('touchend', (e) => {
+    if (toqueX === null) return;
+    const dx = e.changedTouches[0].clientX - toqueX;
+    toqueX = null;
+    if (Math.abs(dx) > 50) navegarVisor(dx < 0 ? 1 : -1);
+  }, { passive: true });
+
+  document.addEventListener('keydown', (e) => {
+    if (visor.hidden) return;
+    if (e.key === 'ArrowLeft') navegarVisor(-1);
+    if (e.key === 'ArrowRight') navegarVisor(1);
+    if (e.key === 'Escape') visor.hidden = true;
+  });
 
   $('visor-fechar').addEventListener('click', () => { visor.hidden = true; });
   visor.addEventListener('click', (e) => { if (e.target === visor) visor.hidden = true; });
 
   visorRemover.addEventListener('click', () => {
     if (!visorAtual || !confirm('Remover este anexo da tarefa?')) return;
-    const { anexo, dono } = visorAtual;
+    const { imagens, indice, dono } = visorAtual;
+    const anexo = imagens[indice];
     dono.anexos = (dono.anexos || []).filter((x) => x.id !== anexo.id);
     apagarAnexo(anexo.id);
     urlAnexos.delete(anexo.id);
     salvar();
-    visor.hidden = true;
+    imagens.splice(indice, 1);
+    if (imagens.length === 0) {
+      visor.hidden = true;
+    } else {
+      visorAtual.indice = Math.min(indice, imagens.length - 1);
+      mostrarImagemVisor();
+    }
     renderizarTudo();
   });
 

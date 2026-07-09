@@ -607,7 +607,46 @@ main {
   cursor: pointer;
 }
 
-.visor-acoes { margin-top: 16px; }
+.visor-acoes {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.visor-contagem {
+  color: var(--texto);
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--superficie);
+  border-radius: 999px;
+  padding: 8px 16px;
+}
+
+.visor-seta {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4px;
+}
+.visor-seta:disabled { opacity: 0.25; cursor: default; }
+.visor-seta[hidden] { display: none; }
+#visor-ant { left: 12px; }
+#visor-prox { right: 12px; }
 
 #visor-remover {
   border: 1px solid var(--vermelho);
