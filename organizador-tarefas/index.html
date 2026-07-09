@@ -91,8 +91,18 @@
         <input type="search" id="busca-historico" placeholder="🔍 Pesquisar em tudo que você já fez..."
                enterkeyhint="search" autocorrect="off" spellcheck="false" autocapitalize="off">
       </div>
+      <div class="filtro-dia">
+        <label for="busca-dia">📅 Ver um dia:</label>
+        <input type="date" id="busca-dia">
+        <button id="limpar-dia" type="button" hidden>✕ Todos os dias</button>
+      </div>
       <p id="resultado-busca" class="resultado-busca" hidden></p>
       <div id="conteudo-historico"></div>
+      <div id="paginacao" class="paginacao" hidden>
+        <button id="pag-anterior" type="button">‹ Anterior</button>
+        <span id="pag-info"></span>
+        <button id="pag-proxima" type="button">Próxima ›</button>
+      </div>
       <p id="busca-sem-resultado" class="vazio" hidden>
         Nada encontrado.<br>
         <small>Tente outra palavra — a busca ignora acentos e maiúsculas.</small>

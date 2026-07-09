@@ -422,25 +422,41 @@
     return span;
   }
 
-  // ---- Renderização: histórico agrupado por dia (com busca) ----
+  // ---- Renderização: histórico agrupado por dia (com busca, filtro de dia e páginas) ----
+  const buscaDia = $('busca-dia');
+  const limparDia = $('limpar-dia');
+  const paginacao = $('paginacao');
+  const pagAnterior = $('pag-anterior');
+  const pagProxima = $('pag-proxima');
+  const pagInfo = $('pag-info');
+  const DIAS_POR_PAGINA = 5;
+  let paginaHistorico = 0;
+
   function renderizarHistorico() {
     conteudoHistorico.innerHTML = '';
     vazioHistorico.hidden = historico.length > 0;
 
     const termo = normalizar(buscaHistorico.value.trim());
+    const diaFiltro = buscaDia.value; // já vem como AAAA-MM-DD
+    limparDia.hidden = !diaFiltro;
+
     const ordenado = [...historico]
       .sort((a, b) => b.concluidaEm - a.concluidaEm)
-      .filter((item) => !termo || normalizar(item.texto).includes(termo));
+      .filter((item) => !termo || normalizar(item.texto).includes(termo))
+      .filter((item) => !diaFiltro || chaveDoDia(item.concluidaEm) === diaFiltro);
 
-    if (termo) {
+    const filtrando = termo || diaFiltro;
+    if (filtrando && ordenado.length > 0) {
       resultadoBusca.hidden = false;
-      resultadoBusca.textContent = ordenado.length === 0
-        ? ''
-        : `${ordenado.length} resultado${ordenado.length > 1 ? 's' : ''} para "${buscaHistorico.value.trim()}"`;
+      const partes = [];
+      if (termo) partes.push(`"${buscaHistorico.value.trim()}"`);
+      if (diaFiltro) partes.push(`em ${fmtDia.format(dataDaChave(diaFiltro))}`);
+      resultadoBusca.textContent =
+        `${ordenado.length} resultado${ordenado.length > 1 ? 's' : ''} ${partes.join(' ')}`;
     } else {
       resultadoBusca.hidden = true;
     }
-    buscaSemResultado.hidden = !(termo && ordenado.length === 0 && historico.length > 0);
+    buscaSemResultado.hidden = !(filtrando && ordenado.length === 0 && historico.length > 0);
 
     const grupos = new Map();
     for (const item of ordenado) {
@@ -449,7 +465,23 @@
       grupos.get(chave).push(item);
     }
 
-    for (const [, itens] of grupos) {
+    // Páginas: cada página mostra até 5 dias
+    const dias = [...grupos.keys()];
+    const totalPaginas = Math.max(1, Math.ceil(dias.length / DIAS_POR_PAGINA));
+    if (paginaHistorico > totalPaginas - 1) paginaHistorico = totalPaginas - 1;
+    if (paginaHistorico < 0) paginaHistorico = 0;
+    const diasDaPagina = dias.slice(
+      paginaHistorico * DIAS_POR_PAGINA,
+      (paginaHistorico + 1) * DIAS_POR_PAGINA
+    );
+
+    paginacao.hidden = totalPaginas <= 1;
+    pagInfo.textContent = `Página ${paginaHistorico + 1} de ${totalPaginas}`;
+    pagAnterior.disabled = paginaHistorico === 0;
+    pagProxima.disabled = paginaHistorico >= totalPaginas - 1;
+
+    for (const chaveDia of diasDaPagina) {
+      const itens = grupos.get(chaveDia);
       const secao = document.createElement('section');
       secao.className = 'grupo-dia';
 
@@ -597,7 +629,35 @@
     calEntrada.focus();
   });
 
-  buscaHistorico.addEventListener('input', renderizarHistorico);
+  buscaHistorico.addEventListener('input', () => {
+    paginaHistorico = 0;
+    renderizarHistorico();
+  });
+
+  buscaDia.addEventListener('change', () => {
+    paginaHistorico = 0;
+    renderizarHistorico();
+  });
+
+  limparDia.addEventListener('click', () => {
+    buscaDia.value = '';
+    paginaHistorico = 0;
+    renderizarHistorico();
+  });
+
+  const principal = document.querySelector('main');
+
+  pagAnterior.addEventListener('click', () => {
+    paginaHistorico--;
+    renderizarHistorico();
+    principal.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  pagProxima.addEventListener('click', () => {
+    paginaHistorico++;
+    renderizarHistorico();
+    principal.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   $('cal-anterior').addEventListener('click', () => {
     mesExibido = new Date(mesExibido.getFullYear(), mesExibido.getMonth() - 1, 1);
