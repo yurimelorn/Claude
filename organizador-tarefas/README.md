@@ -7,6 +7,7 @@ Ele **não precisa de App Store**: você instala direto pelo Safari do iPad.
 
 - ✅ **Adicionar serviços/tarefas** a fazer, digitando ou **ditando por voz** (🎙️ em português)
 - ✅ Ao tocar no círculo de "ok", a tarefa **some da lista** com uma animação
+- ✅ **Anexos**: o botão de clipe adiciona **imagens** a qualquer tarefa; **segurando o círculo de ok**, você pode anexar uma imagem ou um documento à tarefa na hora de concluir — os anexos aparecem no histórico (fotos são comprimidas e tudo fica guardado no aparelho, no IndexedDB)
 - ✅ O que **não for concluído no dia passa automaticamente para o dia seguinte**, com a etiqueta "veio de DD/MM"
 - ✅ Aba de **Calendário** para agendar tarefas em qualquer dia — elas aparecem na lista principal quando o dia chega (dias com tarefas ganham um pontinho verde)
 - ✅ Aba de **Histórico** com tudo que você já fez, **agrupado por dia** (Hoje, Ontem, datas) e com o **horário** exato de conclusão

@@ -52,6 +52,76 @@
     localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(historico));
   }
 
+  // ---- Banco de anexos (IndexedDB — comporta fotos e documentos) ----
+  const bancoAnexos = new Promise((resolve) => {
+    const req = indexedDB.open('organizador-anexos', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('anexos', { keyPath: 'id' });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
+
+  function guardarAnexo(registro) {
+    return bancoAnexos.then((db) => new Promise((res) => {
+      if (!db) return res();
+      const tx = db.transaction('anexos', 'readwrite');
+      tx.objectStore('anexos').put(registro);
+      tx.oncomplete = res;
+      tx.onerror = res;
+    }));
+  }
+
+  function obterAnexo(id) {
+    return bancoAnexos.then((db) => new Promise((res) => {
+      if (!db) return res(null);
+      const rq = db.transaction('anexos').objectStore('anexos').get(id);
+      rq.onsuccess = () => res(rq.result || null);
+      rq.onerror = () => res(null);
+    }));
+  }
+
+  function apagarAnexo(id) {
+    return bancoAnexos.then((db) => {
+      if (db) db.transaction('anexos', 'readwrite').objectStore('anexos').delete(id);
+    });
+  }
+
+  // Reaproveita as URLs dos blobs já carregados
+  const urlAnexos = new Map();
+  async function urlDoAnexo(id) {
+    if (urlAnexos.has(id)) return urlAnexos.get(id);
+    const reg = await obterAnexo(id);
+    if (!reg) return null;
+    const u = URL.createObjectURL(reg.blob);
+    urlAnexos.set(id, u);
+    return u;
+  }
+
+  // Reduz fotos grandes para caberem bem no banco (máx. 1400px, JPEG)
+  function comprimirImagem(arquivo) {
+    return new Promise((resolve) => {
+      if (!arquivo.type.startsWith('image/')) return resolve(arquivo);
+      const url = URL.createObjectURL(arquivo);
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1400;
+        const escala = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * escala);
+        const h = Math.round(img.height * escala);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob) => resolve(blob || arquivo), 'image/jpeg', 0.82);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(arquivo);
+      };
+      img.src = url;
+    });
+  }
+
   // ---- Datas ----
   const fmtHora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const fmtDia = new Intl.DateTimeFormat('pt-BR', {
@@ -116,10 +186,28 @@
 
     const ok = document.createElement('button');
     ok.className = 'botao-ok';
-    ok.title = 'Marcar como feita';
-    ok.setAttribute('aria-label', 'Marcar como feita');
+    ok.title = 'Toque: concluir · Segure: concluir com anexo';
+    ok.setAttribute('aria-label', 'Marcar como feita (segure para anexar)');
     ok.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>';
-    ok.addEventListener('click', () => concluir(t.id, li, ok));
+
+    // Toque rápido conclui; segurar abre o menu de concluir com anexo
+    let temporizador = null;
+    let segurou = false;
+    ok.addEventListener('pointerdown', () => {
+      segurou = false;
+      temporizador = setTimeout(() => {
+        segurou = true;
+        abrirMenuConcluir(t);
+      }, 500);
+    });
+    const cancelarSegurar = () => clearTimeout(temporizador);
+    ok.addEventListener('pointerup', cancelarSegurar);
+    ok.addEventListener('pointerleave', cancelarSegurar);
+    ok.addEventListener('pointercancel', cancelarSegurar);
+    ok.addEventListener('contextmenu', (e) => e.preventDefault());
+    ok.addEventListener('click', () => {
+      if (!segurou) concluir(t.id, li, ok);
+    });
 
     const texto = document.createElement('div');
     texto.className = 'texto';
@@ -136,6 +224,14 @@
       detalhe.textContent = `adicionada às ${fmtHora.format(new Date(t.criadaEm))}`;
     }
     texto.appendChild(detalhe);
+    preencherAnexos(texto, t, true);
+
+    const clipe = document.createElement('button');
+    clipe.className = 'botao-excluir';
+    clipe.title = 'Anexar imagem';
+    clipe.setAttribute('aria-label', 'Anexar imagem');
+    clipe.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6H10v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6h-1.5z"/></svg>';
+    clipe.addEventListener('click', () => pedirArquivos(arquivoImagem, t.id, false));
 
     const excluir = document.createElement('button');
     excluir.className = 'botao-excluir';
@@ -144,15 +240,156 @@
     excluir.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
     excluir.addEventListener('click', () => {
       if (confirm('Excluir esta tarefa sem marcar como feita?')) {
+        for (const a of t.anexos || []) {
+          apagarAnexo(a.id);
+          urlAnexos.delete(a.id);
+        }
         tarefas = tarefas.filter((x) => x.id !== t.id);
         salvar();
         renderizarTudo();
       }
     });
 
-    li.append(ok, texto, excluir);
+    li.append(ok, texto, clipe, excluir);
     return li;
   }
+
+  // ---- Anexos: miniaturas e chips ----
+  function preencherAnexos(destino, dono, removivel) {
+    const anexos = dono.anexos || [];
+    if (!anexos.length) return;
+    const linha = document.createElement('div');
+    linha.className = 'anexos';
+    for (const a of anexos) {
+      if ((a.tipo || '').startsWith('image/')) {
+        const img = document.createElement('img');
+        img.className = 'anexo-mini';
+        img.alt = a.nome || 'imagem';
+        urlDoAnexo(a.id).then((u) => { if (u) img.src = u; });
+        img.addEventListener('click', () => abrirVisor(a, dono, removivel));
+        linha.appendChild(img);
+      } else {
+        const chip = document.createElement('button');
+        chip.className = 'anexo-chip';
+        chip.type = 'button';
+        chip.textContent = `📄 ${a.nome || 'documento'}`;
+        chip.addEventListener('click', () => baixarAnexo(a));
+        linha.appendChild(chip);
+      }
+    }
+    destino.appendChild(linha);
+  }
+
+  async function baixarAnexo(a) {
+    const u = await urlDoAnexo(a.id);
+    if (!u) {
+      alert('Anexo não encontrado neste aparelho.');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = u;
+    link.download = a.nome || 'documento';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  // ---- Visualizador de imagem ----
+  const visor = $('visor');
+  const visorImg = $('visor-img');
+  const visorRemover = $('visor-remover');
+  let visorAtual = null;
+
+  function abrirVisor(anexo, dono, removivel) {
+    visorAtual = { anexo, dono };
+    visorImg.removeAttribute('src');
+    urlDoAnexo(anexo.id).then((u) => { if (u) visorImg.src = u; });
+    visorRemover.hidden = !removivel;
+    visor.hidden = false;
+  }
+
+  $('visor-fechar').addEventListener('click', () => { visor.hidden = true; });
+  visor.addEventListener('click', (e) => { if (e.target === visor) visor.hidden = true; });
+
+  visorRemover.addEventListener('click', () => {
+    if (!visorAtual || !confirm('Remover este anexo da tarefa?')) return;
+    const { anexo, dono } = visorAtual;
+    dono.anexos = (dono.anexos || []).filter((x) => x.id !== anexo.id);
+    apagarAnexo(anexo.id);
+    urlAnexos.delete(anexo.id);
+    salvar();
+    visor.hidden = true;
+    renderizarTudo();
+  });
+
+  // ---- Escolha de arquivos (imagem/documento) ----
+  const arquivoImagem = $('arquivo-imagem');
+  const arquivoDoc = $('arquivo-doc');
+  let contextoAnexo = null; // { tarefaId, concluirDepois }
+
+  function pedirArquivos(input, tarefaId, concluirDepois) {
+    contextoAnexo = { tarefaId, concluirDepois };
+    input.value = '';
+    input.click();
+  }
+
+  async function tratarEscolha(input) {
+    const ctx = contextoAnexo;
+    contextoAnexo = null;
+    if (!ctx || !input.files.length) return;
+    const tarefa = tarefas.find((t) => t.id === ctx.tarefaId);
+    if (!tarefa) return;
+
+    for (const arquivo of input.files) {
+      if (arquivo.size > 20 * 1024 * 1024) {
+        alert(`"${arquivo.name}" é muito grande (limite de 20 MB).`);
+        continue;
+      }
+      const blob = await comprimirImagem(arquivo);
+      const tipo = blob.type || arquivo.type || 'application/octet-stream';
+      const id = `anexo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      await guardarAnexo({ id, nome: arquivo.name, tipo, blob });
+      if (!tarefa.anexos) tarefa.anexos = [];
+      tarefa.anexos.push({ id, nome: arquivo.name, tipo });
+    }
+    salvar();
+    if (ctx.concluirDepois) concluir(tarefa.id);
+    else renderizarTudo();
+  }
+
+  arquivoImagem.addEventListener('change', () => tratarEscolha(arquivoImagem));
+  arquivoDoc.addEventListener('change', () => tratarEscolha(arquivoDoc));
+
+  // ---- Menu "segurar para concluir com anexo" ----
+  const menuConcluir = $('menu-concluir');
+  const menuTitulo = $('menu-concluir-titulo');
+  let tarefaDoMenu = null;
+
+  function abrirMenuConcluir(t) {
+    tarefaDoMenu = t;
+    menuTitulo.textContent = t.texto;
+    menuConcluir.hidden = false;
+  }
+
+  function fecharMenuConcluir() {
+    menuConcluir.hidden = true;
+  }
+
+  $('mc-imagem').addEventListener('click', () => {
+    fecharMenuConcluir();
+    pedirArquivos(arquivoImagem, tarefaDoMenu.id, true);
+  });
+  $('mc-doc').addEventListener('click', () => {
+    fecharMenuConcluir();
+    pedirArquivos(arquivoDoc, tarefaDoMenu.id, true);
+  });
+  $('mc-so-concluir').addEventListener('click', () => {
+    fecharMenuConcluir();
+    concluir(tarefaDoMenu.id);
+  });
+  $('mc-cancelar').addEventListener('click', fecharMenuConcluir);
+  menuConcluir.querySelector('.folha-fundo').addEventListener('click', fecharMenuConcluir);
 
   // ---- Busca: ignora acentos e maiúsculas/minúsculas ----
   function normalizar(s) {
@@ -228,10 +465,14 @@
         hora.className = 'hora';
         hora.textContent = fmtHora.format(new Date(item.concluidaEm));
 
+        const coluna = document.createElement('div');
+        coluna.className = 'coluna';
         const texto = textoComDestaque(item.texto, termo);
         texto.className = 'texto';
+        coluna.appendChild(texto);
+        preencherAnexos(coluna, item, false);
 
-        div.append(hora, texto);
+        div.append(hora, coluna);
         secao.appendChild(div);
       }
       conteudoHistorico.appendChild(secao);
@@ -320,15 +561,26 @@
     const tarefa = tarefas.find((t) => t.id === id);
     if (!tarefa) return;
 
-    botao.classList.add('marcado');
-    li.classList.add('saindo');
-
-    setTimeout(() => {
+    const finalizar = () => {
       tarefas = tarefas.filter((t) => t.id !== id);
-      historico.push({ id: tarefa.id, texto: tarefa.texto, criadaEm: tarefa.criadaEm, concluidaEm: Date.now() });
+      historico.push({
+        id: tarefa.id,
+        texto: tarefa.texto,
+        criadaEm: tarefa.criadaEm,
+        concluidaEm: Date.now(),
+        anexos: tarefa.anexos || [],
+      });
       salvar();
       renderizarTudo();
-    }, 300);
+    };
+
+    if (li && botao) {
+      botao.classList.add('marcado');
+      li.classList.add('saindo');
+      setTimeout(finalizar, 300);
+    } else {
+      finalizar();
+    }
   }
 
   form.addEventListener('submit', (e) => {

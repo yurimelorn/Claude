@@ -190,6 +190,10 @@ main {
   justify-content: center;
   color: transparent;
   transition: all 0.15s;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .botao-ok:active, .botao-ok.marcado {
@@ -400,6 +404,145 @@ main {
   line-height: 1.8;
 }
 .vazio small { font-size: 0.85rem; }
+
+/* ===== Anexos ===== */
+.anexos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.anexo-mini {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--superficie-2);
+  background: var(--superficie-2);
+  cursor: pointer;
+}
+
+.anexo-chip {
+  border: 1px solid var(--superficie-2);
+  border-radius: 999px;
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 0.8rem;
+  padding: 7px 12px;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.item-historico .coluna { flex: 1; min-width: 0; }
+.item-historico { align-items: flex-start; }
+
+/* ===== Menu de concluir (folha inferior) ===== */
+.folha { position: fixed; inset: 0; z-index: 120; }
+.folha[hidden] { display: none; }
+
+.folha-fundo {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.folha-conteudo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--superficie);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  animation: subir 0.25s ease;
+}
+
+@keyframes subir {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.folha-conteudo p {
+  font-size: 0.9rem;
+  color: var(--texto-suave);
+  text-align: center;
+  margin-bottom: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.folha-opcao {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+.folha-opcao:active { opacity: 0.8; }
+.folha-opcao.destaque { background: var(--acento); color: #1f0e00; }
+.folha-opcao.cancelar { background: transparent; color: var(--texto-suave); margin-bottom: 0; }
+
+@media (min-width: 700px) {
+  .folha-conteudo { max-width: 480px; left: 50%; transform: translateX(-50%); border-radius: 20px; bottom: 24px; }
+}
+
+/* ===== Visualizador de imagem ===== */
+.visor {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.visor[hidden] { display: none; }
+
+.visor img {
+  max-width: 100%;
+  max-height: 78vh;
+  border-radius: 12px;
+}
+
+#visor-fechar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.visor-acoes { margin-top: 16px; }
+
+#visor-remover {
+  border: 1px solid var(--vermelho);
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--vermelho);
+  font-size: 0.9rem;
+  padding: 11px 20px;
+  cursor: pointer;
+}
 
 /* ===== Botão de fechar o teclado ===== */
 .fechar-teclado {

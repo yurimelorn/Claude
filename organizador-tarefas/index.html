@@ -104,6 +104,31 @@
     </section>
   </main>
 
+  <!-- Seletores de arquivo (invisíveis) -->
+  <input type="file" id="arquivo-imagem" accept="image/*" multiple hidden>
+  <input type="file" id="arquivo-doc" multiple hidden>
+
+  <!-- Menu ao segurar o botão de concluir -->
+  <div id="menu-concluir" class="folha" hidden>
+    <div class="folha-fundo" data-fechar></div>
+    <div class="folha-conteudo">
+      <p id="menu-concluir-titulo"></p>
+      <button id="mc-imagem" class="folha-opcao">📷 Anexar imagem e concluir</button>
+      <button id="mc-doc" class="folha-opcao">📄 Anexar documento e concluir</button>
+      <button id="mc-so-concluir" class="folha-opcao destaque">✅ Só concluir</button>
+      <button id="mc-cancelar" class="folha-opcao cancelar">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- Visualizador de imagem anexada -->
+  <div id="visor" class="visor" hidden>
+    <button id="visor-fechar" aria-label="Fechar">✕</button>
+    <img id="visor-img" alt="Anexo">
+    <div class="visor-acoes">
+      <button id="visor-remover" hidden>🗑 Remover anexo</button>
+    </div>
+  </div>
+
   <button id="fechar-teclado" class="fechar-teclado" hidden aria-label="Fechar teclado" title="Fechar teclado">
     <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor" aria-hidden="true">
       <path d="M20 2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-9 3h2v2h-2V5zm0 3h2v2h-2V8zM8 5h2v2H8V5zm0 3h2v2H8V8zM7 10H5V8h2v2zm0-3H5V5h2v2zm9 6H8v-2h8v2zm0-3h-2V8h2v2zm0-3h-2V5h2v2zm3 3h-2V8h2v2zm0-3h-2V5h2v2zM12 23l4-4H8l4 4z"/>
