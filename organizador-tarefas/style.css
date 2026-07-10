@@ -82,6 +82,27 @@ body {
   border-radius: 999px;
 }
 
+.topo-direita {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.botao-sino {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: var(--superficie-2);
+  color: var(--texto-suave);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.botao-sino.ativo { background: var(--acento); color: #1f0e00; }
+.botao-sino:active { transform: scale(0.92); }
+
 /* ===== Painéis / abas ===== */
 main {
   flex: 1;

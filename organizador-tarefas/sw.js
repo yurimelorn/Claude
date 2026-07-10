@@ -1,5 +1,5 @@
 /* Service worker: deixa o app funcionar offline depois da primeira visita. */
-const CACHE = 'organizador-tarefas-v9';
+const CACHE = 'organizador-tarefas-v10';
 const ARQUIVOS = [
   '.',
   'index.html',
@@ -21,6 +21,16 @@ self.addEventListener('activate', (e) => {
     caches.keys().then((chaves) =>
       Promise.all(chaves.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
+  );
+});
+
+// Tocar na notificação abre (ou traz de volta) o app
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((janelas) =>
+      janelas.length ? janelas[0].focus() : self.clients.openWindow('.')
+    )
   );
 });
 

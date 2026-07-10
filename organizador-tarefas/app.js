@@ -164,10 +164,10 @@
   function renderizarTarefas() {
     listaTarefas.innerHTML = '';
 
-    // Tarefas do dia + tudo que ficou para trás (passa para o dia seguinte automaticamente)
+    // Tarefas do dia + tudo que ficou para trás; as adicionadas por último ficam no topo
     const visiveis = tarefas
       .filter((t) => t.paraDia <= hoje())
-      .sort((a, b) => (a.paraDia < b.paraDia ? -1 : a.paraDia > b.paraDia ? 1 : b.criadaEm - a.criadaEm));
+      .sort((a, b) => b.criadaEm - a.criadaEm);
 
     vazioTarefas.hidden = visiveis.length > 0;
     contador.textContent = visiveis.length === 0
@@ -651,6 +651,80 @@
     renderizarTarefas();
     renderizarHistorico();
     renderizarCalendario();
+    verificarLembretes();
+  }
+
+  // ---- Lembretes e número no ícone do app ----
+  const botaoLembretes = $('botao-lembretes');
+  const CHAVE_LEMBRETES = 'organizador.lembretes';
+  const CHAVE_ULTIMO_AVISO = 'organizador.ultimoAviso';
+
+  function lembretesAtivos() {
+    return localStorage.getItem(CHAVE_LEMBRETES) === '1'
+      && typeof Notification !== 'undefined'
+      && Notification.permission === 'granted';
+  }
+
+  function atualizarSino() {
+    botaoLembretes.classList.toggle('ativo', lembretesAtivos());
+  }
+
+  botaoLembretes.addEventListener('click', async () => {
+    if (typeof Notification === 'undefined') {
+      alert('Este navegador não suporta notificações. No iPad, elas funcionam com o app instalado na tela de início (iPadOS 16.4 ou mais novo).');
+      return;
+    }
+    if (lembretesAtivos()) {
+      localStorage.setItem(CHAVE_LEMBRETES, '0');
+      atualizarSino();
+      alert('Lembretes desativados.');
+      return;
+    }
+    const permissao = await Notification.requestPermission();
+    if (permissao === 'granted') {
+      localStorage.setItem(CHAVE_LEMBRETES, '1');
+      localStorage.removeItem(CHAVE_ULTIMO_AVISO);
+      atualizarSino();
+      verificarLembretes();
+      alert('Lembretes ativados! Ao abrir o app, você recebe um aviso das tarefas de hoje e de amanhã, e o ícone mostra quantas estão pendentes.');
+    } else {
+      alert('Permissão negada. Para ativar depois, libere as notificações nos Ajustes do iPad.');
+    }
+  });
+
+  async function verificarLembretes() {
+    const pendentesHoje = tarefas.filter((t) => t.paraDia <= hoje()).length;
+
+    // Número no ícone do app (badge)
+    if ('setAppBadge' in navigator) {
+      if (pendentesHoje > 0) navigator.setAppBadge(pendentesHoje).catch(() => {});
+      else if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+    }
+
+    // Aviso de notificação: uma vez por dia, ao abrir o app
+    if (!lembretesAtivos()) return;
+    if (localStorage.getItem(CHAVE_ULTIMO_AVISO) === hoje()) return;
+
+    const chaveAmanha = chaveDoDia(Date.now() + 86400000);
+    const pendentesAmanha = tarefas.filter((t) => t.paraDia === chaveAmanha).length;
+    if (pendentesHoje === 0 && pendentesAmanha === 0) return;
+
+    const partes = [];
+    if (pendentesHoje) partes.push(`${pendentesHoje} tarefa${pendentesHoje > 1 ? 's' : ''} para hoje`);
+    if (pendentesAmanha) partes.push(`${pendentesAmanha} para amanhã`);
+
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification('Minhas Tarefas', {
+        body: partes.join(' · '),
+        icon: 'icon-192.png',
+        badge: 'icon-192.png',
+        tag: 'lembrete-diario',
+      });
+      localStorage.setItem(CHAVE_ULTIMO_AVISO, hoje());
+    } catch {
+      /* navegador sem suporte a notificações via service worker */
+    }
   }
 
   // ---- Ações ----
@@ -916,5 +990,6 @@
   }
 
   // ---- Inicialização ----
+  atualizarSino();
   renderizarTudo();
 })();

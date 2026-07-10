@@ -14,6 +14,7 @@ Ele **não precisa de App Store**: você instala direto pelo Safari do iPad.
 - ✅ **Busca no histórico**: pesquise qualquer palavra (ex.: "DUDA") e veja tudo relacionado, ainda agrupado por dia — a busca ignora acentos e maiúsculas
 - ✅ Campos de texto **sem correção automática** do teclado (o que você escreve fica como escreveu)
 - ✅ Visual **preto e laranja**
+- ✅ **Lembretes** (sino no topo): aviso de notificação ao abrir o app com as tarefas de hoje/amanhã, e o ícone do app mostra o número de pendentes (badge) — sem servidor, tudo local
 - ✅ Funciona **offline** depois da primeira visita (service worker)
 - ✅ Os dados ficam salvos **no próprio aparelho** (localStorage) — nada vai para servidor nenhum
 
