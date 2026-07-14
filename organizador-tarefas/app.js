@@ -85,6 +85,15 @@
     });
   }
 
+  function listarAnexos() {
+    return bancoAnexos.then((db) => new Promise((res) => {
+      if (!db) return res([]);
+      const rq = db.transaction('anexos').objectStore('anexos').getAll();
+      rq.onsuccess = () => res(rq.result || []);
+      rq.onerror = () => res([]);
+    }));
+  }
+
   // Reaproveita as URLs dos blobs já carregados
   const urlAnexos = new Map();
   async function urlDoAnexo(id) {
@@ -748,7 +757,7 @@
 
     try {
       const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification('Minhas Tarefas', {
+      await reg.showNotification('Unique Organization', {
         body: partes.join(' · '),
         icon: 'icon-192.png',
         badge: 'icon-192.png',
@@ -1001,6 +1010,88 @@
       setTimeout(() => { statusVoz.hidden = true; }, 6000);
     });
   }
+
+  // ---- Backup: exportar e importar tudo (tarefas, histórico e anexos) ----
+  function blobParaBase64(blob) {
+    return new Promise((res, rej) => {
+      const leitor = new FileReader();
+      leitor.onload = () => res(String(leitor.result).split(',')[1] || '');
+      leitor.onerror = () => rej(leitor.error);
+      leitor.readAsDataURL(blob);
+    });
+  }
+
+  function base64ParaBlob(b64, tipo) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type: tipo || 'application/octet-stream' });
+  }
+
+  $('botao-exportar-backup').addEventListener('click', async () => {
+    const registros = await listarAnexos();
+    const anexos = [];
+    for (const r of registros) {
+      try {
+        anexos.push({ id: r.id, nome: r.nome, tipo: r.tipo, dados: await blobParaBase64(r.blob) });
+      } catch { /* anexo ilegível: segue sem ele */ }
+    }
+    const backup = {
+      app: 'organizador',
+      versao: 1,
+      exportadoEm: new Date().toISOString(),
+      tarefas,
+      historico,
+      anexos,
+    };
+    const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup-uts-${hoje()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    alert(`Backup exportado: ${tarefas.length} tarefa(s) pendente(s), ${historico.length} no histórico e ${anexos.length} anexo(s).\n\nGuarde o arquivo no app Arquivos (ou iCloud).`);
+  });
+
+  const arquivoBackup = $('arquivo-backup');
+  $('botao-importar-backup').addEventListener('click', () => {
+    arquivoBackup.value = '';
+    arquivoBackup.click();
+  });
+
+  arquivoBackup.addEventListener('change', async () => {
+    const f = arquivoBackup.files[0];
+    if (!f) return;
+    try {
+      const dados = JSON.parse(await f.text());
+      if (dados.app !== 'organizador' || !Array.isArray(dados.tarefas) || !Array.isArray(dados.historico)) {
+        alert('Este arquivo não parece ser um backup deste app.');
+        return;
+      }
+      const quando = dados.exportadoEm ? new Date(dados.exportadoEm).toLocaleString('pt-BR') : 'data desconhecida';
+      const resumo = `${dados.tarefas.length} tarefa(s), ${dados.historico.length} no histórico e ${(dados.anexos || []).length} anexo(s)`;
+      if (!confirm(`Importar o backup de ${quando}?\n(${resumo})\n\nATENÇÃO: isso substitui o que está no app agora.`)) return;
+
+      tarefas = dados.tarefas;
+      historico = dados.historico;
+      for (const t of tarefas) {
+        if (!t.paraDia) t.paraDia = chaveDoDia(t.criadaEm || Date.now());
+      }
+      salvar();
+      for (const a of dados.anexos || []) {
+        await guardarAnexo({ id: a.id, nome: a.nome, tipo: a.tipo, blob: base64ParaBlob(a.dados, a.tipo) });
+      }
+      for (const u of urlAnexos.values()) URL.revokeObjectURL(u);
+      urlAnexos.clear();
+      renderizarTudo();
+      alert('Backup importado com sucesso! ✅');
+    } catch (erro) {
+      alert('Não consegui importar: ' + (erro && erro.message ? erro.message : erro));
+    }
+  });
 
   // ---- Service worker (offline / instalável) + aviso de atualização ----
   if ('serviceWorker' in navigator) {

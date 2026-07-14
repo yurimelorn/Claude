@@ -1,5 +1,5 @@
 /* Service worker: deixa o app funcionar offline depois da primeira visita. */
-const CACHE = 'organizador-tarefas-v14';
+const CACHE = 'organizador-tarefas-v15';
 const ARQUIVOS = [
   '.',
   'index.html',

@@ -1,7 +1,7 @@
 {
-  "name": "Minhas Tarefas",
-  "short_name": "Tarefas",
-  "description": "Organizador pessoal de tarefas com voz e histórico",
+  "name": "Unique Organization",
+  "short_name": "UTS Org",
+  "description": "Unique Organization — organizador pessoal de tarefas com voz, anexos e histórico",
   "lang": "pt-BR",
   "start_url": ".",
   "scope": ".",

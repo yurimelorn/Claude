@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Minhas Tarefas</title>
-  <meta name="description" content="Organizador pessoal de tarefas com voz e histórico">
+  <title>Unique Organization</title>
+  <meta name="description" content="Unique Organization — organizador pessoal de tarefas com voz, anexos e histórico">
   <meta name="theme-color" content="#000000">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tarefas">
+  <meta name="apple-mobile-web-app-title" content="UTS Org">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
   </button>
 
   <header class="topo">
-    <h1 id="titulo-app">Minhas Tarefas</h1>
+    <h1 id="titulo-app">Unique Organization</h1>
     <div class="topo-direita">
       <button id="botao-pdf" class="botao-sino" title="Editar um PDF" aria-label="Abrir e editar um PDF">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
@@ -115,6 +115,17 @@
         <span id="pag-info"></span>
         <button id="pag-proxima" type="button">Próxima ›</button>
       </div>
+
+      <div class="backup">
+        <h3>💾 Backup</h3>
+        <p>Guarda todas as tarefas, o histórico e os anexos num arquivo.
+           Use antes de trocar o ícone da tela de início ou de aparelho.</p>
+        <div class="backup-botoes">
+          <button id="botao-exportar-backup" type="button">⬇ Exportar backup</button>
+          <button id="botao-importar-backup" type="button">⬆ Importar backup</button>
+        </div>
+      </div>
+      <input type="file" id="arquivo-backup" accept=".json,application/json" hidden>
       <p id="busca-sem-resultado" class="vazio" hidden>
         Nada encontrado.<br>
         <small>Tente outra palavra — a busca ignora acentos e maiúsculas.</small>
