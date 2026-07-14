@@ -396,8 +396,9 @@
 
   function definirBarra(aberta) {
     barraFerramentas.classList.toggle('fechada', !aberta);
-    alternarBarra.classList.toggle('rente', !aberta);
-    alternarBarra.innerHTML = aberta ? '⌄ &nbsp;Esconder' : '⌃ &nbsp;Ferramentas';
+    alternarBarra.textContent = aberta ? '⌄' : '⌃';
+    // Quando a barra está aberta, a setinha sobe para ficar logo acima dela
+    alternarBarra.style.bottom = aberta ? `${barraFerramentas.offsetHeight + 10}px` : '';
   }
 
   alternarBarra.addEventListener('click', () => {
