@@ -922,9 +922,18 @@
     // pequeno atraso: se o foco só pulou de um campo para outro, o botão fica
     setTimeout(() => {
       const ativo = document.activeElement;
-      if (!ativo || ativo.tagName !== 'INPUT') botaoTeclado.hidden = true;
+      if (!ativo || ativo.tagName !== 'INPUT') {
+        botaoTeclado.hidden = true;
+        // Reancora a tela: o teclado do iOS pode deixar o viewport deslocado
+        window.scrollTo(0, 0);
+      }
     }, 120);
   });
+
+  // Bloqueia o zoom nativo do iOS sobre o app (o zoom do editor é próprio)
+  for (const evento of ['gesturestart', 'gesturechange', 'gestureend']) {
+    document.addEventListener(evento, (e) => e.preventDefault());
+  }
 
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', posicionarBotaoTeclado);

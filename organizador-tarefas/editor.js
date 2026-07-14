@@ -231,10 +231,21 @@
   }
 
   function posicao(e) {
-    const r = canvasDesenho.getBoundingClientRect();
+    // offsetX/Y são relativos ao próprio canvas, calculados pelo navegador —
+    // imunes aos deslocamentos de viewport do iOS (teclado, zoom nativo)
+    let x;
+    let y;
+    if (e.target === canvasDesenho && typeof e.offsetX === 'number') {
+      x = e.offsetX / canvasDesenho.clientWidth;
+      y = e.offsetY / canvasDesenho.clientHeight;
+    } else {
+      const r = canvasDesenho.getBoundingClientRect();
+      x = (e.clientX - r.left) / r.width;
+      y = (e.clientY - r.top) / r.height;
+    }
     return {
-      x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
-      y: Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)),
+      x: Math.min(1, Math.max(0, x)),
+      y: Math.min(1, Math.max(0, y)),
     };
   }
 
@@ -247,6 +258,8 @@
       const p = posicao(e);
       definirBarra(false);
       const txt = prompt('Texto para inserir:');
+      // Reancora a tela: o teclado do iOS pode deixar o viewport deslocado
+      window.scrollTo(0, 0);
       if (txt && txt.trim()) {
         itensDaPagina().push({ t: 'texto', cor, l: largura / zoom, x: p.x, y: p.y, txt: txt.trim() });
         houveMudanca = true;
