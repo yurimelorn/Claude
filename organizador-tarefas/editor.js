@@ -98,7 +98,8 @@
   }
 
   // ---- Exibição da página ----
-  async function mostrarPagina(n) {
+  // aoAplicar: executado no mesmo instante da troca do desenho (sem quadro em branco)
+  async function mostrarPagina(n, aoAplicar) {
     if (!pdf) return;
     paginaAtual = n;
     const pagina = await pdf.getPage(n);
@@ -115,20 +116,28 @@
     }
     const vp = pagina.getViewport({ scale: escalaCss * nitidez, rotation: rotacao });
 
-    canvasPdf.width = Math.floor(vp.width);
-    canvasPdf.height = Math.floor(vp.height);
-    canvasDesenho.width = canvasPdf.width;
-    canvasDesenho.height = canvasPdf.height;
-    const cssL = `${Math.floor(vp.width / nitidez)}px`;
-    const cssA = `${Math.floor(vp.height / nitidez)}px`;
+    // Renderiza primeiro num canvas de rascunho: a tela só muda quando estiver pronto
+    const rascunho = document.createElement('canvas');
+    rascunho.width = Math.floor(vp.width);
+    rascunho.height = Math.floor(vp.height);
+    await pagina.render({ canvasContext: rascunho.getContext('2d'), viewport: vp }).promise;
+
+    // Troca instantânea, tudo no mesmo quadro (sem piscar)
+    canvasPdf.width = rascunho.width;
+    canvasPdf.height = rascunho.height;
+    canvasPdf.getContext('2d').drawImage(rascunho, 0, 0);
+    canvasDesenho.width = rascunho.width;
+    canvasDesenho.height = rascunho.height;
+    const cssL = `${Math.floor(rascunho.width / nitidez)}px`;
+    const cssA = `${Math.floor(rascunho.height / nitidez)}px`;
     for (const c of [canvasPdf, canvasDesenho]) {
       c.style.width = cssL;
       c.style.height = cssA;
     }
     folha.style.width = cssL;
     folha.style.height = cssA;
+    if (aoAplicar) aoAplicar();
 
-    await pagina.render({ canvasContext: canvasPdf.getContext('2d'), viewport: vp }).promise;
     pagInfo.textContent = `${n} / ${pdf.numPages}`;
     $('ed-pag-ant').disabled = n <= 1;
     $('ed-pag-prox').disabled = n >= pdf.numPages;
@@ -308,6 +317,8 @@
   // ---- Gestos com os dedos: um dedo move, dois dedos dão zoom (pinça) ----
   const toques = new Map(); // pointerId -> {x, y}
   let gesto = null;
+  let travaPinca = false;   // após aplicar um zoom, espera soltar todos os dedos
+  let aplicandoZoom = false;
 
   function distancia() {
     const [a, b] = [...toques.values()];
@@ -326,8 +337,10 @@
     if (e.isPrimary) {
       toques.clear();
       gesto = null;
+      travaPinca = false;
     }
     toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (travaPinca) return;
 
     const podeArrastar = soCaneta || ferramenta === 'mover';
     if (toques.size === 1 && podeArrastar) {
@@ -383,22 +396,31 @@
     if (e.pointerType !== 'touch') return;
     toques.delete(e.pointerId);
 
-    if (gesto && gesto.tipo === 'pinch' && toques.size < 2) {
+    if (gesto && gesto.tipo === 'pinch' && toques.size < 2 && !aplicandoZoom) {
       const antigo = gesto;
       gesto = null;
-      folha.style.transform = '';
-      folha.style.transformOrigin = '0 0';
+      travaPinca = true; // nada de nova pinça até soltar todos os dedos
       const novoZoom = Math.max(1, Math.min(4, antigo.zoom0 * antigo.fator));
       if (Math.abs(novoZoom - antigo.zoom0) > 0.01) {
+        aplicandoZoom = true;
         zoom = novoZoom;
-        await mostrarPagina(paginaAtual);
-        // Recoloca o ponto da página que estava entre os dedos na mesma posição da tela
-        area.scrollLeft = folha.offsetLeft + antigo.ponto.x * folha.offsetWidth - antigo.foco.x;
-        area.scrollTop = folha.offsetTop + antigo.ponto.y * folha.offsetHeight - antigo.foco.y;
+        // A imagem ampliada pelo gesto fica na tela até a nova renderização
+        // estar pronta; a troca acontece num único quadro (sem piscar)
+        await mostrarPagina(paginaAtual, () => {
+          folha.style.transform = '';
+          folha.style.transformOrigin = '0 0';
+          area.scrollLeft = folha.offsetLeft + antigo.ponto.x * folha.offsetWidth - antigo.foco.x;
+          area.scrollTop = folha.offsetTop + antigo.ponto.y * folha.offsetHeight - antigo.foco.y;
+        });
+        aplicandoZoom = false;
+      } else {
+        folha.style.transform = '';
+        folha.style.transformOrigin = '0 0';
       }
     } else if (gesto && gesto.tipo === 'pan' && toques.size === 0) {
       gesto = null;
     }
+    if (toques.size === 0) travaPinca = false;
   }
   area.addEventListener('pointerup', fimDeToque);
   area.addEventListener('pointercancel', fimDeToque);
