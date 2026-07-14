@@ -81,6 +81,7 @@
     carregando.hidden = false;
     carregando.textContent = 'Carregando PDF...';
     pagInfo.textContent = '';
+    definirBarra(false);
 
     try {
       await carregarBibliotecas();
@@ -244,9 +245,10 @@
     if (ferramenta === 'texto') {
       e.preventDefault();
       const p = posicao(e);
+      definirBarra(false);
       const txt = prompt('Texto para inserir:');
       if (txt && txt.trim()) {
-        itensDaPagina().push({ t: 'texto', cor, l: largura, x: p.x, y: p.y, txt: txt.trim() });
+        itensDaPagina().push({ t: 'texto', cor, l: largura / zoom, x: p.x, y: p.y, txt: txt.trim() });
         houveMudanca = true;
         redesenhar();
       }
@@ -260,9 +262,12 @@
       canvasDesenho.setPointerCapture(e.pointerId);
     } catch { /* ponteiro sintético em testes */ }
     const p = posicao(e);
+    // A grossura acompanha o zoom: ampliado, o traço fica proporcionalmente mais fino
+    const traco = largura / zoom;
     itemEmCurso = FERRAMENTAS_LIVRES.includes(ferramenta)
-      ? { t: ferramenta, cor, l: largura, p: [p] }
-      : { t: ferramenta, cor, l: largura, x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+      ? { t: ferramenta, cor, l: traco, p: [p] }
+      : { t: ferramenta, cor, l: traco, x1: p.x, y1: p.y, x2: p.x, y2: p.y };
+    definirBarra(false);
     redesenhar();
   });
 
@@ -384,6 +389,20 @@
   }
   area.addEventListener('pointerup', fimDeToque);
   area.addEventListener('pointercancel', fimDeToque);
+
+  // ---- Barra de ferramentas retrátil ----
+  const barraFerramentas = document.querySelector('.editor-barra');
+  const alternarBarra = $('ed-alternar');
+
+  function definirBarra(aberta) {
+    barraFerramentas.classList.toggle('fechada', !aberta);
+    alternarBarra.classList.toggle('rente', !aberta);
+    alternarBarra.innerHTML = aberta ? '⌄ &nbsp;Esconder' : '⌃ &nbsp;Ferramentas';
+  }
+
+  alternarBarra.addEventListener('click', () => {
+    definirBarra(barraFerramentas.classList.contains('fechada'));
+  });
 
   // ---- Barra de ferramentas ----
   function ligarGrupo(idGrupo, atributo, acao) {
