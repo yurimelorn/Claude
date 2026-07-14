@@ -1,10 +1,14 @@
 /* Service worker: deixa o app funcionar offline depois da primeira visita. */
-const CACHE = 'organizador-tarefas-v10';
+const CACHE = 'organizador-tarefas-v11';
 const ARQUIVOS = [
   '.',
   'index.html',
   'style.css',
   'app.js',
+  'editor.js',
+  'pdf.min.js',
+  'pdf.worker.min.js',
+  'pdf-lib.min.js',
   'manifest.webmanifest',
   'icon-192.png',
   'icon-512.png',

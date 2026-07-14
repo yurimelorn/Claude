@@ -272,8 +272,30 @@
         const chip = document.createElement('button');
         chip.className = 'anexo-chip';
         chip.type = 'button';
-        chip.textContent = `📄 ${a.nome || 'documento'}`;
-        chip.addEventListener('click', () => baixarAnexo(a));
+        const ehPdf = (a.tipo || '') === 'application/pdf' || /\.pdf$/i.test(a.nome || '');
+        chip.textContent = `${ehPdf ? '📝' : '📄'} ${a.nome || 'documento'}`;
+        chip.addEventListener('click', async () => {
+          if (!ehPdf) {
+            baixarAnexo(a);
+            return;
+          }
+          const reg = await obterAnexo(a.id);
+          if (!reg) {
+            alert('Anexo não encontrado neste aparelho.');
+            return;
+          }
+          // PDFs abrem no editor; o Salvar substitui o anexo pela versão editada
+          window.EditorPDF.abrir(reg.blob, {
+            nome: a.nome || 'documento.pdf',
+            aoSalvar: async (novoBlob) => {
+              await guardarAnexo({ id: a.id, nome: a.nome, tipo: 'application/pdf', blob: novoBlob });
+              const antiga = urlAnexos.get(a.id);
+              if (antiga) URL.revokeObjectURL(antiga);
+              urlAnexos.delete(a.id);
+              renderizarTudo();
+            },
+          });
+        });
         linha.appendChild(chip);
       }
     }
@@ -427,6 +449,17 @@
 
   arquivoImagem.addEventListener('change', () => tratarEscolha(arquivoImagem));
   arquivoDoc.addEventListener('change', () => tratarEscolha(arquivoDoc));
+
+  // ---- Abrir um PDF avulso no editor (botão do cabeçalho) ----
+  const arquivoPdf = $('arquivo-pdf');
+  $('botao-pdf').addEventListener('click', () => {
+    arquivoPdf.value = '';
+    arquivoPdf.click();
+  });
+  arquivoPdf.addEventListener('change', () => {
+    const f = arquivoPdf.files[0];
+    if (f) window.EditorPDF.abrir(f, { nome: f.name });
+  });
 
   // ---- Menu "segurar para concluir com anexo" ----
   const menuConcluir = $('menu-concluir');

@@ -23,6 +23,11 @@
   <header class="topo">
     <h1 id="titulo-app">Minhas Tarefas</h1>
     <div class="topo-direita">
+      <button id="botao-pdf" class="botao-sino" title="Editar um PDF" aria-label="Abrir e editar um PDF">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+        </svg>
+      </button>
       <button id="botao-lembretes" class="botao-sino" title="Lembretes" aria-label="Ativar ou desativar lembretes">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
           <path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -124,6 +129,53 @@
   <!-- Seletores de arquivo (invisíveis) -->
   <input type="file" id="arquivo-imagem" accept="image/*" multiple hidden>
   <input type="file" id="arquivo-doc" multiple hidden>
+  <input type="file" id="arquivo-pdf" accept="application/pdf,.pdf" hidden>
+
+  <!-- Editor de PDF -->
+  <div id="editor-pdf" class="editor" hidden>
+    <div class="editor-topo">
+      <button id="ed-fechar" title="Fechar" aria-label="Fechar editor">✕</button>
+      <div class="editor-pags">
+        <button id="ed-pag-ant" aria-label="Página anterior">‹</button>
+        <span id="ed-pag-info"></span>
+        <button id="ed-pag-prox" aria-label="Próxima página">›</button>
+      </div>
+      <button id="ed-desfazer" title="Desfazer último traço" aria-label="Desfazer">↩</button>
+      <button id="ed-salvar" class="ed-acao" hidden>💾 Salvar</button>
+      <button id="ed-exportar" class="ed-acao">⬇ Exportar</button>
+    </div>
+    <div class="editor-area" id="ed-area">
+      <div class="editor-folha" id="ed-folha">
+        <canvas id="ed-canvas-pdf"></canvas>
+        <canvas id="ed-canvas-desenho"></canvas>
+      </div>
+    </div>
+    <p id="ed-carregando" class="ed-carregando" hidden>Carregando PDF...</p>
+    <div class="editor-barra">
+      <div class="ed-grupo" id="ed-ferramentas">
+        <button data-fer="mover" title="Mover e rolar a página">✋</button>
+        <button data-fer="caneta" class="ativo" title="Caneta livre">✏️</button>
+        <button data-fer="linha" title="Linha reta">╱</button>
+        <button data-fer="seta" title="Seta">➜</button>
+        <button data-fer="ret" title="Retângulo">▭</button>
+        <button data-fer="circ" title="Círculo">◯</button>
+      </div>
+      <div class="ed-grupo" id="ed-cores">
+        <button data-cor="#ff3b30" style="--c:#ff3b30" class="ativo" aria-label="Vermelho"></button>
+        <button data-cor="#ff9500" style="--c:#ff9500" aria-label="Laranja"></button>
+        <button data-cor="#ffe000" style="--c:#ffe000" aria-label="Amarelo"></button>
+        <button data-cor="#34c759" style="--c:#34c759" aria-label="Verde"></button>
+        <button data-cor="#0a84ff" style="--c:#0a84ff" aria-label="Azul"></button>
+        <button data-cor="#ffffff" style="--c:#ffffff" aria-label="Branco"></button>
+        <button data-cor="#000000" style="--c:#000000" aria-label="Preto"></button>
+      </div>
+      <div class="ed-grupo" id="ed-larguras">
+        <button data-larg="0.004" title="Traço fino"><span class="bolinha p"></span></button>
+        <button data-larg="0.008" class="ativo" title="Traço médio"><span class="bolinha m"></span></button>
+        <button data-larg="0.016" title="Traço grosso"><span class="bolinha g"></span></button>
+      </div>
+    </div>
+  </div>
 
   <!-- Menu ao segurar o botão de concluir -->
   <div id="menu-concluir" class="folha" hidden>
@@ -177,5 +229,6 @@
   </nav>
 
   <script src="app.js"></script>
+  <script src="editor.js"></script>
 </body>
 </html>

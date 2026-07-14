@@ -692,6 +692,133 @@ main {
   cursor: pointer;
 }
 
+/* ===== Editor de PDF ===== */
+.editor {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+}
+.editor[hidden] { display: none; }
+
+.editor-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px;
+  background: var(--superficie);
+}
+
+.editor-topo button {
+  border: none;
+  border-radius: 10px;
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 1rem;
+  padding: 10px 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.editor-topo button:disabled { opacity: 0.3; }
+
+.editor-pags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+}
+
+#ed-pag-info {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+  text-align: center;
+}
+
+.ed-acao { background: var(--acento) !important; color: #1f0e00 !important; font-weight: 700; }
+
+.editor-area {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  padding: 12px;
+}
+
+.editor-folha {
+  position: relative;
+  margin: auto;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  background: #fff;
+}
+
+.editor-folha canvas { display: block; }
+
+#ed-canvas-desenho {
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.ed-carregando {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--superficie);
+  color: var(--texto);
+  padding: 14px 22px;
+  border-radius: var(--raio);
+  font-size: 0.95rem;
+  z-index: 2;
+}
+
+.editor-barra {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
+  background: var(--superficie);
+}
+
+.ed-grupo {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ed-grupo button {
+  width: 42px;
+  height: 42px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background: var(--superficie-2);
+  color: var(--texto);
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ed-grupo button.ativo { border-color: var(--acento); background: #33230f; }
+
+#ed-cores button {
+  border-radius: 50%;
+  background: var(--c);
+}
+#ed-cores button.ativo { border-color: #fff; box-shadow: 0 0 0 2px var(--acento); }
+
+.bolinha { border-radius: 50%; background: var(--texto); display: block; }
+.bolinha.p { width: 4px; height: 4px; }
+.bolinha.m { width: 8px; height: 8px; }
+.bolinha.g { width: 14px; height: 14px; }
+
 /* ===== Botão de fechar o teclado ===== */
 .fechar-teclado {
   position: fixed;
