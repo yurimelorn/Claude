@@ -111,44 +111,73 @@
     return desenhos.get(paginaAtual);
   }
 
+  const FERRAMENTAS_LIVRES = ['caneta', 'marca'];
+
+  function cabecaDeSeta(ctx, xPonta, yPonta, angulo, tamanho) {
+    ctx.beginPath();
+    ctx.moveTo(xPonta, yPonta);
+    ctx.lineTo(xPonta - tamanho * Math.cos(angulo - 0.5), yPonta - tamanho * Math.sin(angulo - 0.5));
+    ctx.moveTo(xPonta, yPonta);
+    ctx.lineTo(xPonta - tamanho * Math.cos(angulo + 0.5), yPonta - tamanho * Math.sin(angulo + 0.5));
+    ctx.stroke();
+  }
+
   function desenharItem(ctx, item, W, H) {
+    ctx.save();
     ctx.strokeStyle = item.cor;
+    ctx.fillStyle = item.cor;
     ctx.lineWidth = Math.max(1, item.l * W);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+
+    if (item.t === 'marca') {
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = Math.max(2, item.l * W * 3);
+    }
+    if (item.t === 'tracejada') {
+      ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+    }
+
     ctx.beginPath();
-    if (item.t === 'caneta') {
+    if (FERRAMENTAS_LIVRES.includes(item.t)) {
       item.p.forEach((pt, i) => {
         if (i === 0) ctx.moveTo(pt.x * W, pt.y * H);
         else ctx.lineTo(pt.x * W, pt.y * H);
       });
       ctx.stroke();
+      ctx.restore();
       return;
     }
+
     const x1 = item.x1 * W;
     const y1 = item.y1 * H;
     const x2 = item.x2 * W;
     const y2 = item.y2 * H;
-    if (item.t === 'linha' || item.t === 'seta') {
+    const tamCabeca = Math.max(10, item.l * W * 4);
+
+    if (item.t === 'linha' || item.t === 'tracejada' || item.t === 'seta' || item.t === 'seta2') {
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
-      if (item.t === 'seta') {
-        const ang = Math.atan2(y2 - y1, x2 - x1);
-        const tam = Math.max(10, item.l * W * 4);
-        ctx.beginPath();
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - tam * Math.cos(ang - 0.5), y2 - tam * Math.sin(ang - 0.5));
-        ctx.moveTo(x2, y2);
-        ctx.lineTo(x2 - tam * Math.cos(ang + 0.5), y2 - tam * Math.sin(ang + 0.5));
-        ctx.stroke();
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      if (item.t === 'seta' || item.t === 'seta2') cabecaDeSeta(ctx, x2, y2, ang, tamCabeca);
+      if (item.t === 'seta2') cabecaDeSeta(ctx, x1, y1, ang + Math.PI, tamCabeca);
+    } else if (item.t === 'ret' || item.t === 'retfill') {
+      const x = Math.min(x1, x2);
+      const y = Math.min(y1, y2);
+      const l = Math.abs(x2 - x1);
+      const a = Math.abs(y2 - y1);
+      if (item.t === 'retfill') {
+        ctx.globalAlpha = 0.3;
+        ctx.fillRect(x, y, l, a);
+        ctx.globalAlpha = 1;
       }
-    } else if (item.t === 'ret') {
-      ctx.strokeRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+      ctx.strokeRect(x, y, l, a);
     } else if (item.t === 'circ') {
       ctx.ellipse((x1 + x2) / 2, (y1 + y2) / 2, Math.abs(x2 - x1) / 2, Math.abs(y2 - y1) / 2, 0, 0, Math.PI * 2);
       ctx.stroke();
     }
+    ctx.restore();
   }
 
   function redesenhar() {
@@ -173,8 +202,8 @@
     e.preventDefault();
     canvasDesenho.setPointerCapture(e.pointerId);
     const p = posicao(e);
-    itemEmCurso = ferramenta === 'caneta'
-      ? { t: 'caneta', cor, l: largura, p: [p] }
+    itemEmCurso = FERRAMENTAS_LIVRES.includes(ferramenta)
+      ? { t: ferramenta, cor, l: largura, p: [p] }
       : { t: ferramenta, cor, l: largura, x1: p.x, y1: p.y, x2: p.x, y2: p.y };
     redesenhar();
   });
@@ -182,7 +211,7 @@
   canvasDesenho.addEventListener('pointermove', (e) => {
     if (!itemEmCurso) return;
     const p = posicao(e);
-    if (itemEmCurso.t === 'caneta') itemEmCurso.p.push(p);
+    if (FERRAMENTAS_LIVRES.includes(itemEmCurso.t)) itemEmCurso.p.push(p);
     else {
       itemEmCurso.x2 = p.x;
       itemEmCurso.y2 = p.y;

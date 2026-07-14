@@ -781,8 +781,9 @@ main {
 .editor-barra {
   display: flex;
   align-items: center;
-  gap: 14px;
-  overflow-x: auto;
+  justify-content: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
   padding: 10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px);
   background: var(--superficie);
 }
