@@ -746,6 +746,12 @@ main {
   -webkit-overflow-scrolling: touch;
   display: flex;
   padding: 12px;
+  touch-action: none; /* gestos de dedo tratados pelo app (mover e pinça) */
+}
+
+.editor-topo button.ativo {
+  border: 2px solid var(--acento);
+  background: #33230f;
 }
 
 .editor-folha {

@@ -24,6 +24,23 @@
   let largura = 0.008;          // relativa à largura da página
   let itemEmCurso = null;
   let houveMudanca = false;
+  let zoom = 1;                 // ampliação atual da página (pinça)
+
+  // Modo "só caneta": dedos movem/dão zoom, apenas a Apple Pencil desenha
+  const CHAVE_SO_CANETA = 'organizador.soCaneta';
+  let soCaneta = localStorage.getItem(CHAVE_SO_CANETA) !== '0';
+  const botaoModoCaneta = $('ed-modo-caneta');
+
+  function atualizarModoCaneta() {
+    botaoModoCaneta.classList.toggle('ativo', soCaneta);
+  }
+
+  botaoModoCaneta.addEventListener('click', () => {
+    soCaneta = !soCaneta;
+    localStorage.setItem(CHAVE_SO_CANETA, soCaneta ? '1' : '0');
+    atualizarModoCaneta();
+  });
+  atualizarModoCaneta();
 
   // ---- Carregamento das bibliotecas só quando o editor abre ----
   let bibliotecas = null;
@@ -81,8 +98,13 @@
     const pagina = await pdf.getPage(n);
     const base = pagina.getViewport({ scale: 1 });
     const larguraDisponivel = Math.max(280, area.clientWidth - 24);
-    const escalaCss = larguraDisponivel / base.width;
-    const nitidez = Math.min(window.devicePixelRatio || 1, 2);
+    const escalaCss = (larguraDisponivel / base.width) * zoom;
+    let nitidez = Math.min(window.devicePixelRatio || 1, 2);
+    // Limita o tamanho do canvas para não pesar a memória em zoom alto
+    const maxLargura = 3000;
+    if (base.width * escalaCss * nitidez > maxLargura) {
+      nitidez = maxLargura / (base.width * escalaCss);
+    }
     const vp = pagina.getViewport({ scale: escalaCss * nitidez });
 
     canvasPdf.width = Math.floor(vp.width);
@@ -199,8 +221,12 @@
 
   canvasDesenho.addEventListener('pointerdown', (e) => {
     if (ferramenta === 'mover') return;
+    // No modo "só caneta", o dedo não desenha — serve para mover e dar zoom
+    if (soCaneta && e.pointerType === 'touch') return;
     e.preventDefault();
-    canvasDesenho.setPointerCapture(e.pointerId);
+    try {
+      canvasDesenho.setPointerCapture(e.pointerId);
+    } catch { /* ponteiro sintético em testes */ }
     const p = posicao(e);
     itemEmCurso = FERRAMENTAS_LIVRES.includes(ferramenta)
       ? { t: ferramenta, cor, l: largura, p: [p] }
@@ -228,6 +254,94 @@
   };
   canvasDesenho.addEventListener('pointerup', soltar);
   canvasDesenho.addEventListener('pointercancel', () => { itemEmCurso = null; redesenhar(); });
+
+  // ---- Gestos com os dedos: um dedo move, dois dedos dão zoom (pinça) ----
+  const toques = new Map(); // pointerId -> {x, y}
+  let gesto = null;
+
+  function distancia() {
+    const [a, b] = [...toques.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function centroPinça() {
+    const [a, b] = [...toques.values()];
+    const r = area.getBoundingClientRect();
+    return { x: (a.x + b.x) / 2 - r.left, y: (a.y + b.y) / 2 - r.top };
+  }
+
+  area.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'touch') return;
+    toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    const podeArrastar = soCaneta || ferramenta === 'mover';
+    if (toques.size === 1 && podeArrastar) {
+      gesto = {
+        tipo: 'pan',
+        x: e.clientX,
+        y: e.clientY,
+        sl: area.scrollLeft,
+        st: area.scrollTop,
+      };
+    } else if (toques.size === 2) {
+      // Segundo dedo: se havia um traço em andamento (modo dedo), cancela e vira pinça
+      if (itemEmCurso) {
+        itemEmCurso = null;
+        redesenhar();
+      }
+      const foco = centroPinça();
+      gesto = {
+        tipo: 'pinch',
+        dist: distancia(),
+        zoom0: zoom,
+        fator: 1,
+        foco,
+        sl: area.scrollLeft,
+        st: area.scrollTop,
+      };
+      folha.style.transformOrigin = '0 0';
+    }
+  });
+
+  area.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'touch' || !toques.has(e.pointerId)) return;
+    toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (!gesto) return;
+
+    if (gesto.tipo === 'pan' && toques.size === 1) {
+      area.scrollLeft = gesto.sl - (e.clientX - gesto.x);
+      area.scrollTop = gesto.st - (e.clientY - gesto.y);
+    } else if (gesto.tipo === 'pinch' && toques.size === 2) {
+      const fator = Math.max(0.4, Math.min(4, distancia() / gesto.dist));
+      gesto.fator = fator;
+      folha.style.transform = `scale(${fator})`;
+      area.scrollLeft = (gesto.sl + gesto.foco.x) * fator - gesto.foco.x;
+      area.scrollTop = (gesto.st + gesto.foco.y) * fator - gesto.foco.y;
+    }
+  });
+
+  async function fimDeToque(e) {
+    if (e.pointerType !== 'touch') return;
+    toques.delete(e.pointerId);
+
+    if (gesto && gesto.tipo === 'pinch' && toques.size < 2) {
+      const antigo = gesto;
+      gesto = null;
+      folha.style.transform = '';
+      const novoZoom = Math.max(1, Math.min(4, antigo.zoom0 * antigo.fator));
+      if (Math.abs(novoZoom - antigo.zoom0) > 0.01) {
+        zoom = novoZoom;
+        await mostrarPagina(paginaAtual);
+        const proporcao = novoZoom / antigo.zoom0;
+        area.scrollLeft = (antigo.sl + antigo.foco.x) * proporcao - antigo.foco.x;
+        area.scrollTop = (antigo.st + antigo.foco.y) * proporcao - antigo.foco.y;
+      }
+    } else if (gesto && gesto.tipo === 'pan' && toques.size === 0) {
+      gesto = null;
+    }
+  }
+  area.addEventListener('pointerup', fimDeToque);
+  area.addEventListener('pointercancel', fimDeToque);
 
   // ---- Barra de ferramentas ----
   function ligarGrupo(idGrupo, atributo, acao) {
