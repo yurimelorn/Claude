@@ -25,6 +25,7 @@
   let itemEmCurso = null;
   let houveMudanca = false;
   let zoom = 1;                 // ampliação atual da página (pinça)
+  let rotacoesExtra = new Map(); // página -> giro adicional (0/90/180/270)
 
   // Modo "só caneta": dedos movem/dão zoom, apenas a Apple Pencil desenha
   const CHAVE_SO_CANETA = 'organizador.soCaneta';
@@ -71,12 +72,15 @@
     aoSalvar = opcoes.aoSalvar || null;
     botaoSalvar.hidden = !aoSalvar;
     desenhos = new Map();
+    rotacoesExtra = new Map();
+    zoom = 1;
     paginaAtual = 1;
     houveMudanca = false;
 
     editor.hidden = false;
     carregando.hidden = false;
     carregando.textContent = 'Carregando PDF...';
+    pagInfo.textContent = '';
 
     try {
       await carregarBibliotecas();
@@ -94,9 +98,12 @@
 
   // ---- Exibição da página ----
   async function mostrarPagina(n) {
+    if (!pdf) return;
     paginaAtual = n;
     const pagina = await pdf.getPage(n);
-    const base = pagina.getViewport({ scale: 1 });
+    // Respeita a orientação original da página + o giro aplicado pelo usuário
+    const rotacao = (((pagina.rotate || 0) + (rotacoesExtra.get(n) || 0)) % 360 + 360) % 360;
+    const base = pagina.getViewport({ scale: 1, rotation: rotacao });
     const larguraDisponivel = Math.max(280, area.clientWidth - 24);
     const escalaCss = (larguraDisponivel / base.width) * zoom;
     let nitidez = Math.min(window.devicePixelRatio || 1, 2);
@@ -105,7 +112,7 @@
     if (base.width * escalaCss * nitidez > maxLargura) {
       nitidez = maxLargura / (base.width * escalaCss);
     }
-    const vp = pagina.getViewport({ scale: escalaCss * nitidez });
+    const vp = pagina.getViewport({ scale: escalaCss * nitidez, rotation: rotacao });
 
     canvasPdf.width = Math.floor(vp.width);
     canvasPdf.height = Math.floor(vp.height);
@@ -158,6 +165,17 @@
     }
     if (item.t === 'tracejada') {
       ctx.setLineDash([ctx.lineWidth * 3, ctx.lineWidth * 2]);
+    }
+
+    if (item.t === 'texto') {
+      const tamanho = Math.max(12, item.l * W * 6);
+      ctx.font = `bold ${tamanho}px -apple-system, 'Segoe UI', sans-serif`;
+      ctx.textBaseline = 'top';
+      item.txt.split('\n').forEach((linha, i) => {
+        ctx.fillText(linha, item.x * W, item.y * H + i * tamanho * 1.25);
+      });
+      ctx.restore();
+      return;
     }
 
     ctx.beginPath();
@@ -221,6 +239,20 @@
 
   canvasDesenho.addEventListener('pointerdown', (e) => {
     if (ferramenta === 'mover') return;
+
+    // Texto: um toque (dedo ou caneta) pergunta o texto e coloca no ponto
+    if (ferramenta === 'texto') {
+      e.preventDefault();
+      const p = posicao(e);
+      const txt = prompt('Texto para inserir:');
+      if (txt && txt.trim()) {
+        itensDaPagina().push({ t: 'texto', cor, l: largura, x: p.x, y: p.y, txt: txt.trim() });
+        houveMudanca = true;
+        redesenhar();
+      }
+      return;
+    }
+
     // No modo "só caneta", o dedo não desenha — serve para mover e dar zoom
     if (soCaneta && e.pointerType === 'touch') return;
     e.preventDefault();
@@ -272,6 +304,11 @@
 
   area.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'touch') return;
+    // Primeiro dedo de um novo gesto: descarta toques órfãos de gestos anteriores
+    if (e.isPrimary) {
+      toques.clear();
+      gesto = null;
+    }
     toques.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     const podeArrastar = soCaneta || ferramenta === 'mover';
@@ -290,16 +327,22 @@
         redesenhar();
       }
       const foco = centroPinça();
+      const rf = folha.getBoundingClientRect();
+      const ra = area.getBoundingClientRect();
       gesto = {
         tipo: 'pinch',
         dist: distancia(),
         zoom0: zoom,
         fator: 1,
         foco,
-        sl: area.scrollLeft,
-        st: area.scrollTop,
+        // ponto da PÁGINA (proporcional) que está entre os dedos — é a âncora do zoom
+        ponto: {
+          x: Math.min(1, Math.max(0, (foco.x + ra.left - rf.left) / rf.width)),
+          y: Math.min(1, Math.max(0, (foco.y + ra.top - rf.top) / rf.height)),
+        },
       };
-      folha.style.transformOrigin = '0 0';
+      // O zoom visual acontece em volta do ponto entre os dedos
+      folha.style.transformOrigin = `${gesto.ponto.x * 100}% ${gesto.ponto.y * 100}%`;
     }
   });
 
@@ -315,8 +358,6 @@
       const fator = Math.max(0.4, Math.min(4, distancia() / gesto.dist));
       gesto.fator = fator;
       folha.style.transform = `scale(${fator})`;
-      area.scrollLeft = (gesto.sl + gesto.foco.x) * fator - gesto.foco.x;
-      area.scrollTop = (gesto.st + gesto.foco.y) * fator - gesto.foco.y;
     }
   });
 
@@ -328,13 +369,14 @@
       const antigo = gesto;
       gesto = null;
       folha.style.transform = '';
+      folha.style.transformOrigin = '0 0';
       const novoZoom = Math.max(1, Math.min(4, antigo.zoom0 * antigo.fator));
       if (Math.abs(novoZoom - antigo.zoom0) > 0.01) {
         zoom = novoZoom;
         await mostrarPagina(paginaAtual);
-        const proporcao = novoZoom / antigo.zoom0;
-        area.scrollLeft = (antigo.sl + antigo.foco.x) * proporcao - antigo.foco.x;
-        area.scrollTop = (antigo.st + antigo.foco.y) * proporcao - antigo.foco.y;
+        // Recoloca o ponto da página que estava entre os dedos na mesma posição da tela
+        area.scrollLeft = folha.offsetLeft + antigo.ponto.x * folha.offsetWidth - antigo.foco.x;
+        area.scrollTop = folha.offsetTop + antigo.ponto.y * folha.offsetHeight - antigo.foco.y;
       }
     } else if (gesto && gesto.tipo === 'pan' && toques.size === 0) {
       gesto = null;
@@ -367,6 +409,46 @@
     redesenhar();
   });
 
+  // ---- Girar a página (90° para cada lado; duas vezes = 180°) ----
+  function rotacionarItem90(item) {
+    // giro horário de 90°: (x, y) vira (1 - y, x)
+    const rot = (pt) => {
+      const nx = 1 - pt.y;
+      pt.y = pt.x;
+      pt.x = nx;
+    };
+    if (item.p) {
+      item.p.forEach(rot);
+    } else if (item.t === 'texto') {
+      const p = { x: item.x, y: item.y };
+      rot(p);
+      item.x = p.x;
+      item.y = p.y;
+    } else {
+      const a = { x: item.x1, y: item.y1 };
+      const b = { x: item.x2, y: item.y2 };
+      rot(a);
+      rot(b);
+      item.x1 = a.x;
+      item.y1 = a.y;
+      item.x2 = b.x;
+      item.y2 = b.y;
+    }
+  }
+
+  function girar(graus) {
+    const atual = rotacoesExtra.get(paginaAtual) || 0;
+    rotacoesExtra.set(paginaAtual, (atual + graus + 360) % 360);
+    const passos = ((graus + 360) % 360) / 90;
+    const itens = desenhos.get(paginaAtual) || [];
+    for (let i = 0; i < passos; i++) itens.forEach(rotacionarItem90);
+    houveMudanca = true;
+    mostrarPagina(paginaAtual);
+  }
+
+  $('ed-girar-esq').addEventListener('click', () => girar(-90));
+  $('ed-girar-dir').addEventListener('click', () => girar(90));
+
   $('ed-pag-ant').addEventListener('click', () => { if (paginaAtual > 1) mostrarPagina(paginaAtual - 1); });
   $('ed-pag-prox').addEventListener('click', () => { if (paginaAtual < pdf.numPages) mostrarPagina(paginaAtual + 1); });
 
@@ -378,26 +460,46 @@
   });
 
   // ---- Gerar o PDF com os desenhos gravados ----
+  // Posiciona a imagem do desenho conforme a rotação final da página
+  function opcoesDesenho(rot, W, H) {
+    const { degrees } = window.PDFLib;
+    switch (rot) {
+      case 90: return { x: W, y: 0, width: H, height: W, rotate: degrees(90) };
+      case 180: return { x: W, y: H, width: W, height: H, rotate: degrees(180) };
+      case 270: return { x: 0, y: H, width: H, height: W, rotate: degrees(270) };
+      default: return { x: 0, y: 0, width: W, height: H };
+    }
+  }
+
   async function gerarPdfEditado() {
     const doc = await window.PDFLib.PDFDocument.load(bytesOriginais.slice());
     const paginas = doc.getPages();
 
-    for (const [num, itens] of desenhos) {
-      if (!itens.length || num > paginas.length) continue;
+    for (let num = 1; num <= paginas.length; num++) {
+      const itens = desenhos.get(num) || [];
+      const extra = rotacoesExtra.get(num) || 0;
+      if (!itens.length && extra === 0) continue;
+
       const pagina = paginas[num - 1];
+      const rotOriginal = ((pagina.getRotation().angle || 0) % 360 + 360) % 360;
+      const rotTotal = (rotOriginal + extra) % 360;
+      if (extra) pagina.setRotation(window.PDFLib.degrees(rotTotal));
+      if (!itens.length) continue;
+
       const W = pagina.getWidth();
       const H = pagina.getHeight();
-
+      // O desenho foi feito na orientação exibida; o canvas segue essa orientação
+      const deitado = rotTotal % 180 === 90;
       const c = document.createElement('canvas');
-      c.width = Math.round(W * 2);
-      c.height = Math.round(H * 2);
+      c.width = Math.round((deitado ? H : W) * 2);
+      c.height = Math.round((deitado ? W : H) * 2);
       const ctx = c.getContext('2d');
       for (const item of itens) desenharItem(ctx, item, c.width, c.height);
 
       const png = await new Promise((res) => c.toBlob(res, 'image/png'));
       const bytesPng = new Uint8Array(await png.arrayBuffer());
       const imagem = await doc.embedPng(bytesPng);
-      pagina.drawImage(imagem, { x: 0, y: 0, width: W, height: H });
+      pagina.drawImage(imagem, opcoesDesenho(rotTotal, W, H));
     }
 
     const salvo = await doc.save();

@@ -27,6 +27,15 @@ body {
   flex-direction: column;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
+  /* Comportamento de app: segurar a tela não seleciona texto nem abre menu */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ===== Aviso de atualização ===== */
